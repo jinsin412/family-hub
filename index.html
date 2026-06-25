@@ -265,15 +265,16 @@ tailwind.config = {
           </h3>
           <span id="home-task-count" class="text-label-md font-label-md text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-md">로딩 중</span>
         </div>
-        <div id="home-task-progress" class="w-full h-2 bg-surface-container rounded-full overflow-hidden mb-4">
-          <div id="home-task-bar" class="h-full bg-secondary w-0 transition-all duration-500"></div>
+        <div id="home-task-progress" class="w-full h-2 bg-surface-container rounded-full overflow-hidden mb-5">
+          <div id="home-task-bar" class="h-full bg-secondary w-0 transition-all duration-500 rounded-full"></div>
         </div>
-        <div id="home-tasks-list" class="flex flex-col gap-3 min-h-[80px]">
+        <!-- 멤버별 할일 그룹 -->
+        <div id="home-tasks-list" class="flex flex-col gap-4 min-h-[80px]">
           <div class="flex items-center justify-center h-16 text-on-surface-variant text-body-sm">
             <span class="spinner border-outline-variant border-t-primary mr-2"></span>
           </div>
         </div>
-        <button onclick="openModal('event-modal')" class="w-full mt-4 py-3 border-2 border-dashed border-outline-variant rounded-xl text-label-md font-bold text-outline hover:text-primary hover:border-primary transition-all flex items-center justify-center gap-2">
+        <button onclick="openModal('event-modal');setModalType('task')" class="w-full mt-4 py-3 border-2 border-dashed border-outline-variant rounded-xl text-label-md font-bold text-outline hover:text-primary hover:border-primary transition-all flex items-center justify-center gap-2">
           <span class="material-symbols-outlined">add</span>할일 추가
         </button>
       </section>
@@ -963,36 +964,124 @@ function renderHomeEvents() {
   `).join('');
 }
 
-// ─── Render: Home Tasks ──────────────────────────────────────────────────
+// ─── Render: Home Tasks (멤버별 그룹) ────────────────────────────────────
 function renderHomeTasks() {
-  const todayTasks = allTasks.slice(0, 5);
-  const done = todayTasks.filter(t => t.done).length;
-  const pct = todayTasks.length ? Math.round(done / todayTasks.length * 100) : 0;
-
   const countEl = document.getElementById('home-task-count');
   const barEl   = document.getElementById('home-task-bar');
   const listEl  = document.getElementById('home-tasks-list');
   if (!countEl || !barEl || !listEl) return;
 
-  countEl.textContent = `${done} / ${todayTasks.length} 완료`;
-  barEl.style.width = pct + '%';
+  const done  = allTasks.filter(t => t.done).length;
+  const total = allTasks.length;
+  const pct   = total ? Math.round(done / total * 100) : 0;
+  countEl.textContent = `${done} / ${total} 완료`;
+  barEl.style.width   = pct + '%';
 
-  if (todayTasks.length === 0) {
-    listEl.innerHTML = `<p class="text-body-sm text-on-surface-variant text-center py-4">할일이 없습니다</p>`;
+  if (total === 0) {
+    listEl.innerHTML = `<p class="text-body-sm text-on-surface-variant text-center py-4">등록된 할일이 없습니다</p>`;
     return;
   }
-  listEl.innerHTML = todayTasks.map(t => `
-    <div class="flex items-center gap-3 p-3 bg-background rounded-lg border border-surface-variant/20 hover:border-primary/30 transition-colors cursor-pointer"
-         onclick="toggleTask('${t.id}',${!t.done})">
-      <div class="w-6 h-6 rounded-full border-2 ${t.done ? 'border-secondary bg-secondary-container/30' : 'border-outline'} flex items-center justify-center flex-shrink-0">
-        ${t.done ? '<span class="material-symbols-outlined text-[14px] text-secondary">check</span>' : ''}
+
+  // ── 멤버별로 할일 그룹화 ──────────────────────────────
+  // 담당자가 있는 할일: 각 담당자 그룹에 추가
+  // 담당자 없는 할일: '미배정' 그룹
+  const groups = {};  // uid → { member, tasks[] }
+
+  // 가족 멤버 순서대로 그룹 초기화
+  familyMembers.forEach(m => {
+    groups[m.uid] = { member: m, tasks: [] };
+  });
+  groups['unassigned'] = { member: null, tasks: [] };
+
+  allTasks.forEach(t => {
+    const assignees = t.assignees || [];
+    if (assignees.length === 0) {
+      groups['unassigned'].tasks.push(t);
+    } else {
+      assignees.forEach(uid => {
+        if (groups[uid]) groups[uid].tasks.push(t);
+        else groups['unassigned'].tasks.push(t); // 알 수 없는 uid
+      });
+    }
+  });
+
+  // ── 그룹별 HTML 생성 ──────────────────────────────────
+  let html = '';
+
+  const groupKeys = [
+    ...familyMembers.map(m => m.uid),
+    'unassigned'
+  ];
+
+  groupKeys.forEach(key => {
+    const group = groups[key];
+    if (!group || group.tasks.length === 0) return;
+
+    const m    = group.member;
+    const c    = m ? getMemberColor(m.uid) : { bg:'#737781', text:'#fff', light:'#e3e2e0', label:'미배정' };
+    const name = m ? escHtml((m.displayName || m.email).split(' ')[0]) : '미배정';
+    const avatarHtml = m ? memberAvatar(m.uid, 28) :
+      `<div style="width:28px;height:28px;border-radius:50%;background:#e3e2e0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span class="material-symbols-outlined" style="font-size:16px;color:#737781;">person_off</span>
+      </div>`;
+
+    const groupDone    = group.tasks.filter(t => t.done).length;
+    const groupTotal   = group.tasks.length;
+    const groupPct     = Math.round(groupDone / groupTotal * 100);
+
+    // 할일 카드들
+    const taskCards = group.tasks.map(t => {
+      const priColor = t.priority === 'high' ? '#ba1a1a' : t.priority === 'low' ? '#737781' : c.bg;
+      return `
+      <div class="flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer hover:shadow-sm group/task"
+           style="border-color:${t.done ? '#c2c6d1' : c.bg+'33'}; background:${t.done ? '#faf9f7' : c.bg+'08'};"
+           onclick="openEditTask('${t.id}')">
+        <!-- 체크박스 -->
+        <div onclick="event.stopPropagation();toggleTask('${t.id}',${!t.done})"
+             class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer"
+             style="border-color:${t.done ? '#006d41' : c.bg}; background:${t.done ? '#006d41' : 'transparent'};">
+          ${t.done ? '<span class="material-symbols-outlined text-white fill-icon" style="font-size:14px;">check</span>' : ''}
+        </div>
+        <!-- 제목 + 우선순위 -->
+        <div class="flex-1 min-w-0">
+          <p class="text-body-sm font-medium truncate ${t.done ? 'line-through text-outline' : 'text-on-surface'}">${escHtml(t.title)}</p>
+          ${t.priority === 'high' ? `<span class="text-[10px] font-bold" style="color:${priColor};">● 높음</span>` :
+            t.priority === 'low'  ? `<span class="text-[10px] text-outline">● 낮음</span>` : ''}
+        </div>
+        <!-- 편집 버튼 -->
+        <span class="material-symbols-outlined text-[16px] opacity-0 group-hover/task:opacity-40 transition-opacity flex-shrink-0"
+              style="color:${c.bg};">edit</span>
+      </div>`;
+    }).join('');
+
+    html += `
+    <div class="rounded-xl overflow-hidden border" style="border-color:${c.bg}33;">
+      <!-- 그룹 헤더 -->
+      <div class="flex items-center gap-2.5 px-3 py-2.5" style="background:${c.bg}15;">
+        ${avatarHtml}
+        <span class="text-body-sm font-bold flex-1" style="color:${c.bg};">${name}</span>
+        <div class="flex items-center gap-1.5">
+          <!-- 미니 진행바 -->
+          <div class="w-16 h-1.5 rounded-full" style="background:${c.bg}25;">
+            <div class="h-full rounded-full transition-all" style="width:${groupPct}%;background:${c.bg};"></div>
+          </div>
+          <span class="text-[10px] font-bold" style="color:${c.bg};">${groupDone}/${groupTotal}</span>
+        </div>
       </div>
-      <div class="flex-grow min-w-0">
-        <p class="text-body-sm font-medium text-on-surface truncate ${t.done ? 'line-through opacity-60' : ''}">${escHtml(t.title)}</p>
-        ${t.priority === 'high' ? '<p class="text-[10px] text-error font-semibold">우선순위 높음</p>' : ''}
+      <!-- 할일 목록 -->
+      <div class="p-2 flex flex-col gap-1.5">
+        ${taskCards}
+        <!-- 이 멤버에게 할일 추가 -->
+        <button onclick="openModalForMember('${m ? m.uid : ''}')"
+          class="w-full py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 mt-0.5 opacity-60 hover:opacity-100"
+          style="color:${c.bg};border:1px dashed ${c.bg}55;">
+          <span class="material-symbols-outlined text-[14px]">add</span>${name}에게 할일 추가
+        </button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  });
+
+  listEl.innerHTML = html || `<p class="text-body-sm text-on-surface-variant text-center py-4">할일이 없습니다</p>`;
 }
 
 // ─── Render: Member filter chips (Tasks page) ────────────────────────────
@@ -1700,6 +1789,23 @@ window.openModal = function(id) {
   document.getElementById(id).classList.add('open');
   document.body.style.overflow = 'hidden';
   renderAssigneeChips();
+};
+
+// 특정 멤버를 담당자로 미리 지정하여 모달 열기
+window.openModalForMember = function(uid) {
+  editingId   = null;
+  editingType = null;
+  resetModal();
+  setModalType('task');
+  // 담당자 미리 선택
+  if (uid) {
+    selectedAssignees = [uid];
+  }
+  document.getElementById('event-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderAssigneeChips();
+  // 제목 입력칸 포커스
+  setTimeout(() => document.getElementById('modal-item-title').focus(), 100);
 };
 
 // 수정 모드로 열기 (일정)
