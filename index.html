@@ -362,11 +362,15 @@ tailwind.config = {
     </section>
 
     <!-- Filter chips -->
-    <section class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-      <button onclick="filterTasks('all')" id="filter-all" class="task-filter whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary text-label-md font-label-md">전체</button>
-      <button onclick="filterTasks('mine')" id="filter-mine" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">내 할일</button>
-      <button onclick="filterTasks('pending')" id="filter-pending" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">미완료</button>
-      <button onclick="filterTasks('done')" id="filter-done" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">완료</button>
+    <section class="space-y-2">
+      <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+        <button onclick="filterTasks('all')" id="filter-all" class="task-filter whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary text-label-md font-label-md">전체</button>
+        <button onclick="filterTasks('mine')" id="filter-mine" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">내 할일</button>
+        <button onclick="filterTasks('pending')" id="filter-pending" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">미완료</button>
+        <button onclick="filterTasks('done')" id="filter-done" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">완료</button>
+      </div>
+      <!-- 가족 멤버별 색상 필터 (동적 렌더) -->
+      <div id="member-filter-chips" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar"></div>
     </section>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -706,14 +710,47 @@ let familyMembers = [];
 let allTasks      = [];
 let allEvents     = [];
 let calYear       = new Date().getFullYear();
-let calMonth      = new Date().getMonth(); // 0-based
+let calMonth      = new Date().getMonth();
 let currentFilter = 'all';
 let modalType     = 'event';
 let taskPriority  = 'mid';
 let selectedAssignees = [];
 let unsubscribers = [];
-let editingId     = null;   // null = 신규, string = 수정 중인 문서 ID
-let editingType   = null;   // 'event' | 'task'
+let editingId     = null;
+let editingType   = null;
+
+// 가족 멤버별 색상 팔레트 (bg, text, border, light 순)
+const MEMBER_COLORS = [
+  { bg:'#024481', text:'#ffffff', border:'#024481', light:'#d5e3ff', label:'파랑'   },
+  { bg:'#006d41', text:'#ffffff', border:'#006d41', light:'#91f4b8', label:'초록'   },
+  { bg:'#6b3600', text:'#ffffff', border:'#6b3600', light:'#ffdcc4', label:'갈색'   },
+  { bg:'#7b1fa2', text:'#ffffff', border:'#7b1fa2', light:'#e1bee7', label:'보라'   },
+  { bg:'#c62828', text:'#ffffff', border:'#c62828', light:'#ffcdd2', label:'빨강'   },
+  { bg:'#00695c', text:'#ffffff', border:'#00695c', light:'#b2dfdb', label:'청록'   },
+  { bg:'#e65100', text:'#ffffff', border:'#e65100', light:'#ffe0b2', label:'주황'   },
+  { bg:'#283593', text:'#ffffff', border:'#283593', light:'#c5cae9', label:'남색'   },
+];
+
+// uid → 색상 인덱스 매핑 (멤버 순서 기반)
+function getMemberColorIdx(uid) {
+  const idx = familyMembers.findIndex(m => m.uid === uid);
+  return idx >= 0 ? idx % MEMBER_COLORS.length : 0;
+}
+function getMemberColor(uid) {
+  return MEMBER_COLORS[getMemberColorIdx(uid)];
+}
+
+// 아바타 HTML 생성 (이니셜 + 멤버 색상)
+function memberAvatar(uid, size = 32) {
+  const m = familyMembers.find(m => m.uid === uid);
+  if (!m) return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#e3e2e0;display:flex;align-items:center;justify-content:center;font-size:${size*0.4}px;font-weight:700;color:#424750;flex-shrink:0;">?</div>`;
+  const c = getMemberColor(uid);
+  const initial = (m.displayName || m.email)[0].toUpperCase();
+  if (m.photoURL) {
+    return `<img src="${escHtml(m.photoURL)}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${c.border};" alt="${escHtml(initial)}"/>`;
+  }
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${c.bg};color:${c.text};display:flex;align-items:center;justify-content:center;font-size:${size*0.38}px;font-weight:700;flex-shrink:0;border:2px solid ${c.border};">${escHtml(initial)}</div>`;
+}
 
 // ─── Auth state ──────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async user => {
@@ -958,26 +995,52 @@ function renderHomeTasks() {
   `).join('');
 }
 
+// ─── Render: Member filter chips (Tasks page) ────────────────────────────
+function renderMemberFilterChips() {
+  const el = document.getElementById('member-filter-chips');
+  if (!el) return;
+  el.innerHTML = familyMembers.map(m => {
+    const c = getMemberColor(m.uid);
+    const name = escHtml((m.displayName||m.email).split(' ')[0]);
+    const isActive = currentFilter === 'member_' + m.uid;
+    return `<button onclick="filterTasks('member_${m.uid}')"
+      class="task-filter whitespace-nowrap px-3 py-1.5 rounded-full text-label-md font-label-md flex items-center gap-1.5 transition-all border-2"
+      style="${isActive
+        ? `background:${c.bg};color:${c.text};border-color:${c.bg};`
+        : `background:#fff;color:${c.bg};border-color:${c.bg};`}">
+      ${memberAvatar(m.uid, 18)}
+      ${name}
+    </button>`;
+  }).join('');
+}
+
 // ─── Render: Tasks Page ──────────────────────────────────────────────────
 function renderTasksPage() {
   const el = document.getElementById('tasks-list');
   if (!el) return;
 
   let tasks = [...allTasks];
-  if (currentFilter === 'mine') tasks = tasks.filter(t => t.assignees?.includes(currentUser.uid));
+  if (currentFilter === 'mine')    tasks = tasks.filter(t => t.assignees?.includes(currentUser.uid));
   if (currentFilter === 'pending') tasks = tasks.filter(t => !t.done);
-  if (currentFilter === 'done') tasks = tasks.filter(t => t.done);
+  if (currentFilter === 'done')    tasks = tasks.filter(t => t.done);
+  if (currentFilter.startsWith('member_')) {
+    const uid = currentFilter.replace('member_', '');
+    tasks = tasks.filter(t => t.assignees?.includes(uid));
+  }
 
   const done  = allTasks.filter(t => t.done).length;
   const total = allTasks.length;
   const pct   = total ? Math.round(done/total*100) : 0;
 
-  const pctEl   = document.getElementById('tasks-pct');
-  const cntEl   = document.getElementById('tasks-count-label');
-  const barEl   = document.getElementById('tasks-progress-bar');
+  const pctEl = document.getElementById('tasks-pct');
+  const cntEl = document.getElementById('tasks-count-label');
+  const barEl = document.getElementById('tasks-progress-bar');
   if (pctEl) pctEl.textContent = pct + '%';
   if (cntEl) cntEl.textContent = `${done} / ${total} 완료`;
   if (barEl) barEl.style.width = pct + '%';
+
+  // 멤버 필터 칩 재렌더
+  renderMemberFilterChips();
 
   if (tasks.length === 0) {
     el.innerHTML = `<div class="flex flex-col items-center justify-center h-40 gap-3 text-on-surface-variant">
@@ -988,33 +1051,59 @@ function renderTasksPage() {
     return;
   }
 
-  const priBorderColor = { high: 'border-error', mid: 'border-primary', low: 'border-outline-variant' };
+  const priBorderColor = { high:'border-error', mid:'border-primary', low:'border-outline-variant' };
+
   el.innerHTML = tasks.map(t => {
-    const assigneeNames = (t.assignees || []).map(uid => {
-      const m = familyMembers.find(m => m.uid === uid);
-      return m ? escHtml((m.displayName||m.email)[0].toUpperCase()) : '?';
-    });
     const borderColor = priBorderColor[t.priority||'mid'] || 'border-primary';
+
+    // 담당자 아바타 (색상 적용)
+    const assigneeAvatars = (t.assignees||[]).map(uid => memberAvatar(uid, 24)).join('');
+
+    // 담당자 지정 드롭다운 옵션
+    const assignOptions = familyMembers.map(m => {
+      const sel = (t.assignees||[]).includes(m.uid);
+      return `<option value="${m.uid}" ${sel?'selected':''}>${escHtml((m.displayName||m.email).split(' ')[0])}</option>`;
+    }).join('');
+
     return `
-    <div class="group bg-surface-container-lowest p-4 rounded-xl shadow-[0px_2px_8px_rgba(0,0,0,0.04)] border-l-4 ${borderColor} flex items-center gap-4 hover:-translate-y-0.5 transition-transform duration-200">
-      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)"
-             class="w-5 h-5 rounded border-outline-variant text-primary cursor-pointer flex-shrink-0"/>
-      <div class="flex-1 min-w-0 cursor-pointer" onclick="openEditTask('${t.id}')">
-        <p class="text-body-md font-semibold text-on-surface truncate ${t.done?'line-through opacity-50':''}">${escHtml(t.title)}</p>
-        <div class="flex items-center gap-2 mt-1 flex-wrap">
-          ${t.priority==='high'?'<span class="text-[10px] font-bold text-error bg-error-container/30 px-1.5 py-0.5 rounded">높음</span>':''}
-          ${assigneeNames.length ? `<div class="flex gap-1">${assigneeNames.map(n=>`<span class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container text-[10px] font-bold flex items-center justify-center">${n}</span>`).join('')}</div>` : ''}
-          ${t.note ? `<span class="text-[11px] text-on-surface-variant truncate max-w-[120px]">${escHtml(t.note)}</span>` : ''}
-          ${t.lastEditedBy ? `<span class="text-[10px] text-outline">✏️ ${escHtml(getMemberName(t.lastEditedBy))}</span>` : ''}
+    <div class="group bg-surface-container-lowest p-4 rounded-xl shadow-[0px_2px_8px_rgba(0,0,0,0.04)] border-l-4 ${borderColor} transition-all duration-200 hover:-translate-y-0.5">
+      <div class="flex items-center gap-3">
+        <!-- 완료 체크박스 -->
+        <input type="checkbox" ${t.done?'checked':''}
+               onchange="toggleTask('${t.id}',this.checked)"
+               class="w-5 h-5 rounded border-outline-variant text-primary cursor-pointer flex-shrink-0"/>
+
+        <!-- 내용 영역 -->
+        <div class="flex-1 min-w-0 cursor-pointer" onclick="openEditTask('${t.id}')">
+          <p class="text-body-md font-semibold text-on-surface truncate ${t.done?'line-through opacity-50':''}">${escHtml(t.title)}</p>
+          <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+            ${t.priority==='high'?'<span class="text-[10px] font-bold text-error bg-error-container/30 px-1.5 py-0.5 rounded">높음</span>':''}
+            <!-- 담당자 아바타 -->
+            <div class="flex gap-1 items-center">${assigneeAvatars || '<span class="text-[10px] text-outline">담당자 없음</span>'}</div>
+            ${t.note ? `<span class="text-[11px] text-on-surface-variant truncate max-w-[100px]">${escHtml(t.note)}</span>` : ''}
+            ${t.lastEditedBy ? `<span class="text-[10px] text-outline">✏️ ${escHtml(getMemberName(t.lastEditedBy))}</span>` : ''}
+          </div>
         </div>
-      </div>
-      <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-        <button onclick="openEditTask('${t.id}')" class="p-1.5 rounded-full hover:bg-primary-fixed text-primary transition-colors" title="수정">
-          <span class="material-symbols-outlined text-[18px]">edit</span>
-        </button>
-        <button onclick="deleteItem('task','${t.id}')" class="p-1.5 rounded-full hover:bg-error-container/20 text-error transition-all">
-          <span class="material-symbols-outlined text-[18px]">delete</span>
-        </button>
+
+        <!-- 액션 버튼 (hover 시 표시) -->
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 items-center">
+          <!-- 담당자 빠른 지정 드롭다운 -->
+          <div class="relative">
+            <select onchange="quickAssignTask('${t.id}',this.value)" onclick="event.stopPropagation()"
+              class="appearance-none text-[11px] font-medium bg-surface-container border border-outline-variant rounded-lg px-2 py-1 cursor-pointer text-on-surface-variant hover:border-primary transition-colors pr-5 max-w-[90px]"
+              title="담당자 변경">
+              <option value="">담당자 지정</option>
+              ${assignOptions}
+            </select>
+            <span class="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-[12px] text-outline pointer-events-none">expand_more</span>
+          </div>
+          <button onclick="openEditTask('${t.id}')" class="p-1.5 rounded-full hover:bg-primary-fixed text-primary transition-colors" title="수정">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+          </button>
+          <button onclick="deleteItem('task','${t.id}')" class="p-1.5 rounded-full hover:bg-error-container/20 text-error transition-colors" title="삭제">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -1025,22 +1114,25 @@ function renderLeaderboard() {
   const scores = {};
   familyMembers.forEach(m => { scores[m.uid] = 0; });
   allTasks.filter(t => t.done).forEach(t => {
-    (t.assignees || []).forEach(uid => { scores[uid] = (scores[uid]||0) + 10; });
+    (t.assignees||[]).forEach(uid => { scores[uid] = (scores[uid]||0) + 10; });
   });
   const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]).slice(0,5);
   const el = document.getElementById('leaderboard');
-  if (sorted.every(([,s]) => s === 0)) {
+  if (!el) return;
+  if (sorted.every(([,s]) => s===0)) {
     el.innerHTML = '<p class="text-body-sm opacity-70">아직 완료된 할일이 없습니다</p>';
     return;
   }
+  const medals = ['🥇','🥈','🥉'];
   el.innerHTML = sorted.map(([uid, pts], i) => {
-    const m = familyMembers.find(m => m.uid === uid);
-    const name = m ? (m.displayName || m.email).split(' ')[0] : '?';
-    const medals = ['🥇','🥈','🥉'];
+    const m    = familyMembers.find(m => m.uid===uid);
+    const name = m ? escHtml((m.displayName||m.email).split(' ')[0]) : '?';
+    const c    = getMemberColor(uid);
     return `<div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span class="text-lg">${medals[i]||''}</span>
-        <span class="text-body-md">${name}</span>
+        <span class="text-lg">${medals[i]||'·'}</span>
+        ${memberAvatar(uid, 28)}
+        <span class="text-body-md font-medium" style="color:${c.light};">${name}</span>
       </div>
       <span class="font-bold text-body-md">${pts}pt</span>
     </div>`;
@@ -1049,72 +1141,90 @@ function renderLeaderboard() {
 
 // ─── Render: Calendar ────────────────────────────────────────────────────
 function renderCalendar() {
-  const label = `${calYear}년 ${calMonth+1}월`;
-  document.getElementById('cal-month-label').textContent = label;
-
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  document.getElementById('cal-month-label').textContent = `${calYear}년 ${calMonth+1}월`;
+  const firstDay    = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-  const today = new Date();
-  const grid = document.getElementById('cal-grid');
-
+  const today       = new Date();
+  const grid        = document.getElementById('cal-grid');
   let html = '';
-  // Empty cells
   for (let i = 0; i < firstDay; i++) {
     html += '<div class="min-h-[80px] p-1 border-r border-b border-outline-variant/30 bg-surface-container/30"></div>';
   }
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
-    const dayEvents = allEvents.filter(e => e.date === dateStr);
-    const dow = (firstDay + d - 1) % 7;
+    const dateStr   = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday   = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+    const dayEvs    = allEvents.filter(e => e.date === dateStr);
+    const dow       = (firstDay + d - 1) % 7;
     const isWeekend = dow === 0 || dow === 6;
-
-    html += `<div onclick="selectCalDay('${dateStr}',${d})" class="min-h-[80px] p-1.5 border-r border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container/50 transition-colors">
+    const evChips   = dayEvs.slice(0,2).map(ev => {
+      const firstUid = (ev.assignees||[])[0];
+      const chipBg   = firstUid ? getMemberColor(firstUid).bg : '#024481';
+      return `<div class="text-[10px] font-medium px-1.5 py-0.5 rounded-full truncate text-white" style="background:${chipBg};">${escHtml(ev.title)}</div>`;
+    }).join('');
+    const moreHtml = dayEvs.length > 2 ? `<div class="text-[10px] text-outline">+${dayEvs.length-2}개</div>` : '';
+    html += `<div id="cal-cell-${dateStr}" onclick="selectCalDay('${dateStr}',${d})"
+      class="cal-day-cell min-h-[80px] p-1.5 border-r border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container/50 transition-colors">
       <span class="w-6 h-6 flex items-center justify-center rounded-full text-label-md font-bold mb-1
-        ${isToday ? 'bg-primary text-on-primary' : isWeekend ? 'text-error' : 'text-on-surface'}">
-        ${d}
-      </span>
-      <div class="space-y-0.5">
-        ${dayEvents.slice(0,2).map(ev => `
-          <div class="text-[10px] font-medium px-1 py-0.5 rounded bg-primary-fixed/60 text-primary truncate">${escHtml(ev.title)}</div>
-        `).join('')}
-        ${dayEvents.length > 2 ? `<div class="text-[10px] text-outline">+${dayEvents.length-2}개</div>` : ''}
-      </div>
+        ${isToday ? 'bg-primary text-on-primary' : isWeekend ? 'text-error' : 'text-on-surface'}">${d}</span>
+      <div class="space-y-0.5">${evChips}${moreHtml}</div>
     </div>`;
   }
   grid.innerHTML = html;
 }
-
 function selectCalDay(dateStr, d) {
   const dayEvents = allEvents.filter(e => e.date === dateStr);
   const container = document.getElementById('cal-day-events');
-  const title = document.getElementById('cal-day-title');
-  const list = document.getElementById('cal-day-list');
-  title.textContent = `${calYear}년 ${calMonth+1}월 ${d}일 일정 (${dayEvents.length}개)`;
-  if (dayEvents.length === 0) {
-    list.innerHTML = `<p class="text-body-sm text-on-surface-variant py-4">이 날의 일정이 없습니다</p>
-      <button onclick="openModal('event-modal');document.getElementById('modal-date').value='${dateStr}'" class="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-md font-label-md">+ 일정 추가</button>`;
-  } else {
-    list.innerHTML = dayEvents.map(ev => `
-      <div class="flex items-start gap-3 p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/30 hover:border-primary/30 transition-colors">
-        <div class="w-1 self-stretch rounded-full bg-primary flex-shrink-0"></div>
-        <div class="flex-1 min-w-0 cursor-pointer" onclick="openEditEvent('${ev.id}')">
-          <p class="font-semibold text-on-surface text-body-md">${escHtml(ev.title)}</p>
-          ${ev.timeStart ? `<p class="text-label-md text-on-surface-variant">${escHtml(ev.timeStart)}${ev.timeEnd?' - '+escHtml(ev.timeEnd):''}</p>` : ''}
-          ${ev.location ? `<p class="text-body-sm text-on-surface-variant">📍 ${escHtml(ev.location)}</p>` : ''}
-          ${ev.lastEditedBy ? `<p class="text-[10px] text-outline mt-1">✏️ ${escHtml(getMemberName(ev.lastEditedBy))} 수정</p>` : ''}
-        </div>
-        <div class="flex gap-1 flex-shrink-0">
-          <button onclick="openEditEvent('${ev.id}')" class="p-1.5 rounded-full hover:bg-primary-fixed text-primary transition-colors" title="수정">
-            <span class="material-symbols-outlined text-[18px]">edit</span>
-          </button>
-          <button onclick="deleteItem('event','${ev.id}')" class="p-1.5 rounded-full hover:bg-error-container/20 text-outline hover:text-error transition-colors" title="삭제">
-            <span class="material-symbols-outlined text-[18px]">delete</span>
-          </button>
-        </div>
-      </div>`).join('');
-  }
+  const title     = document.getElementById('cal-day-title');
+  const list      = document.getElementById('cal-day-list');
+
+  title.textContent = `${calYear}년 ${calMonth+1}월 ${d}일`;
+
+  // 일정 목록 (없으면 안내문)
+  const eventsHtml = dayEvents.length === 0
+    ? `<p class="text-body-sm text-on-surface-variant py-2">이 날의 일정이 없습니다</p>`
+    : dayEvents.map(ev => {
+        // 일정 왼쪽 컬러바: 첫 담당자 색상 사용, 없으면 primary
+        const firstAssignee = (ev.assignees||[])[0];
+        const barColor = firstAssignee ? getMemberColor(firstAssignee).bg : '#024481';
+        // 담당자 아바타 목록
+        const avatarsHtml = (ev.assignees||[]).map(uid => memberAvatar(uid, 24)).join('');
+        return `
+        <div class="flex items-start gap-3 p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/30 hover:border-primary/30 transition-colors">
+          <div class="w-1 self-stretch rounded-full flex-shrink-0" style="background:${barColor};"></div>
+          <div class="flex-1 min-w-0 cursor-pointer" onclick="openEditEvent('${ev.id}')">
+            <p class="font-semibold text-on-surface text-body-md">${escHtml(ev.title)}</p>
+            ${ev.timeStart ? `<p class="text-label-md text-on-surface-variant">${escHtml(ev.timeStart)}${ev.timeEnd?' - '+escHtml(ev.timeEnd):''}</p>` : ''}
+            ${ev.location  ? `<p class="text-body-sm text-on-surface-variant mt-0.5">📍 ${escHtml(ev.location)}</p>` : ''}
+            <div class="flex items-center gap-2 mt-1.5">
+              ${avatarsHtml}
+              ${ev.lastEditedBy ? `<span class="text-[10px] text-outline ml-1">✏️ ${escHtml(getMemberName(ev.lastEditedBy))}</span>` : ''}
+            </div>
+          </div>
+          <div class="flex gap-1 flex-shrink-0">
+            <button onclick="openEditEvent('${ev.id}')" class="p-1.5 rounded-full hover:bg-primary-fixed text-primary transition-colors" title="수정">
+              <span class="material-symbols-outlined text-[18px]">edit</span>
+            </button>
+            <button onclick="deleteItem('event','${ev.id}')" class="p-1.5 rounded-full hover:bg-error-container/20 text-outline hover:text-error transition-colors" title="삭제">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+
+  // 일정 추가 버튼 — 항상 표시
+  const addBtnHtml = `
+    <button onclick="openModal('event-modal');document.getElementById('modal-date').value='${dateStr}'"
+      class="mt-3 w-full py-2.5 border-2 border-dashed border-outline-variant rounded-xl text-label-md font-bold text-outline hover:text-primary hover:border-primary transition-all flex items-center justify-center gap-2">
+      <span class="material-symbols-outlined text-[18px]">add</span>${dateStr.replace(/-/g,'.')} 일정 추가
+    </button>`;
+
+  list.innerHTML = eventsHtml + addBtnHtml;
   container.classList.remove('hidden');
+
+  // 선택된 날짜 셀 하이라이트
+  document.querySelectorAll('#cal-grid .cal-day-cell').forEach(c => c.classList.remove('ring-2','ring-primary'));
+  const cell = document.getElementById('cal-cell-' + dateStr);
+  if (cell) cell.classList.add('ring-2','ring-primary');
 }
 
 window.changeCalMonth = function(delta) {
@@ -1134,33 +1244,40 @@ window.selectCalDay = selectCalDay;
 // ─── Render: Calendar member filter ─────────────────────────────────────
 function renderCalendarMemberFilter() {
   const el = document.getElementById('calendar-member-list');
-  const colors = ['bg-primary-container text-on-primary-container','bg-secondary-container text-on-secondary-container','bg-tertiary-container text-on-tertiary-container'];
-  el.innerHTML = familyMembers.map((m, i) => `
+  if (!el) return;
+  el.innerHTML = familyMembers.map(m => {
+    const c = getMemberColor(m.uid);
+    return `
     <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-xl ${colors[i%3]} flex items-center justify-center font-bold text-sm">${(m.displayName||m.email)[0].toUpperCase()}</div>
-      <div class="flex-1">
-        <p class="text-body-sm font-semibold text-on-surface">${m.displayName || m.email}</p>
-        <p class="text-[11px] text-on-surface-variant">${m.role === 'admin' ? '관리자' : '멤버'}</p>
+      ${memberAvatar(m.uid, 36)}
+      <div class="flex-1 min-w-0">
+        <p class="text-body-sm font-semibold text-on-surface truncate">${escHtml(m.displayName || m.email)}</p>
+        <p class="text-[11px] font-semibold" style="color:${c.bg};">${m.role==='admin'?'관리자':'멤버'} · ${c.label}</p>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ─── Render: Family Members (Settings) ──────────────────────────────────
 function renderFamilyMembers() {
   const el = document.getElementById('family-members-list');
-  el.innerHTML = familyMembers.map(m => `
+  if (!el) return;
+  el.innerHTML = familyMembers.map(m => {
+    const c = getMemberColor(m.uid);
+    return `
     <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-container-low transition-colors">
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-lg">
-          ${m.photoURL ? `<img src="${m.photoURL}" class="w-full h-full object-cover rounded-full"/>` : (m.displayName||m.email)[0].toUpperCase()}
-        </div>
+        ${memberAvatar(m.uid, 48)}
         <div>
-          <h4 class="text-body-lg font-semibold text-on-surface">${m.displayName||'(이름 없음)'}</h4>
-          <p class="text-body-sm text-on-surface-variant">${m.email}</p>
+          <h4 class="text-body-lg font-semibold text-on-surface">${escHtml(m.displayName||'(이름 없음)')}</h4>
+          <p class="text-body-sm text-on-surface-variant">${escHtml(m.email)}</p>
+          <p class="text-[11px] font-bold mt-0.5" style="color:${c.bg};">● ${c.label}</p>
         </div>
       </div>
-      <span class="px-3 py-1 ${m.role==='admin'?'bg-primary text-on-primary':'bg-surface-container text-on-surface-variant'} text-label-md font-label-md rounded-full">${m.role==='admin'?'관리자':'멤버'}</span>
-    </div>`).join('');
+      <span class="px-3 py-1 text-label-md font-bold rounded-full text-white"
+            style="background:${m.role==='admin'?c.bg:'#737781'};">${m.role==='admin'?'관리자':'멤버'}</span>
+    </div>`;
+  }).join('');
 }
 
 // ─── Render: Activity Feed ───────────────────────────────────────────────
@@ -1171,16 +1288,47 @@ function renderActivityFeed(activities) {
     el.innerHTML = '<p class="text-body-sm text-on-surface-variant text-center py-4">활동 내역이 없습니다</p>';
     return;
   }
-  el.innerHTML = activities.slice(0,10).map(a => `
-    <div class="flex gap-3">
-      <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">
-        ${a.userName ? escHtml(a.userName[0].toUpperCase()) : '?'}
+
+  // 활동 타입별 아이콘/색상
+  const typeIcon = {
+    event_added:   { icon: 'event',              color: '#024481' },
+    event_edited:  { icon: 'edit_calendar',       color: '#094784' },
+    task_added:    { icon: 'add_task',            color: '#006d41' },
+    task_edited:   { icon: 'edit',               color: '#005230' },
+    task_done:     { icon: 'check_circle',        color: '#006d41' },
+    task_undone:   { icon: 'cancel',             color: '#ba1a1a' },
+    item_deleted:  { icon: 'delete',             color: '#ba1a1a' },
+    member_joined: { icon: 'person_add',         color: '#7b1fa2' },
+    family_joined: { icon: 'family_restroom',    color: '#024481' },
+  };
+
+  el.innerHTML = activities.slice(0, 20).map(a => {
+    const ti = typeIcon[a.type] || { icon: 'notifications', color: '#737781' };
+    // 멤버 색상 아바타
+    const m = familyMembers.find(m => m.uid === a.uid);
+    const avatarHtml = m ? memberAvatar(a.uid, 32) :
+      `<div style="width:32px;height:32px;border-radius:50%;background:${ti.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span class="material-symbols-outlined" style="color:#fff;font-size:16px;">${ti.icon}</span>
+      </div>`;
+
+    // 메시지 하이라이트: 콜론 뒤 내용 강조
+    const rawMsg = escHtml(a.message || '');
+    const highlightedMsg = rawMsg.replace(
+      /: (.+)$/,
+      `: <strong style="color:#1a1c1b;">$1</strong>`
+    );
+
+    return `
+    <div class="flex gap-3 items-start">
+      ${avatarHtml}
+      <div class="flex-1 min-w-0">
+        <div class="bg-surface-container-low p-3 rounded-tr-xl rounded-br-xl rounded-bl-xl">
+          <p class="text-body-sm leading-relaxed">${highlightedMsg}</p>
+          <p class="text-[10px] text-outline mt-1">${formatTime(a.createdAt)}</p>
+        </div>
       </div>
-      <div class="bg-surface-container-low p-3 rounded-tr-xl rounded-br-xl rounded-bl-xl flex-grow">
-        <p class="text-body-sm">${escHtml(a.message)}</p>
-        <p class="text-[10px] text-outline mt-1">${formatTime(a.createdAt)}</p>
-      </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ─── Render: Notifications ───────────────────────────────────────────────
@@ -1380,10 +1528,19 @@ window.saveItem = async function() {
 
 window.toggleTask = async function(id, done) {
   try {
-    await updateDoc(doc(db, 'tasks', id), { done, updatedAt: serverTimestamp() });
+    await updateDoc(doc(db, 'tasks', id), {
+      done,
+      updatedAt:    serverTimestamp(),
+      doneBy:       done ? currentUser.uid : null,
+      doneCancelBy: done ? null : currentUser.uid,
+    });
+    const task = allTasks.find(t => t.id === id);
+    const taskTitle = task ? task.title : '';
+    const who = currentUser.displayName || currentUser.email;
     if (done) {
-      const task = allTasks.find(t => t.id === id);
-      if (task) logActivity('task_done', `${currentUser.displayName||currentUser.email}님이 완료했습니다: ${task.title}`);
+      logActivity('task_done',     `✅ ${who}님이 완료했습니다: ${taskTitle}`);
+    } else {
+      logActivity('task_undone',   `↩️ ${who}님이 완료를 취소했습니다: ${taskTitle}`);
     }
   } catch(e) {
     console.error('toggleTask error:', e);
@@ -1392,11 +1549,22 @@ window.toggleTask = async function(id, done) {
 };
 
 window.deleteItem = async function(type, id) {
-  const confirmed = await showConfirm('삭제하시겠습니까?');
+  const confirmed = await showConfirm(type === 'event' ? '이 일정을 삭제하시겠습니까?' : '이 할일을 삭제하시겠습니까?');
   if (!confirmed) return;
   try {
+    // 삭제 전에 제목 먼저 보관
+    const item = type === 'event'
+      ? allEvents.find(e => e.id === id)
+      : allTasks.find(t => t.id === id);
+    const itemTitle = item ? item.title : '(제목 없음)';
+    const who = currentUser.displayName || currentUser.email;
+    const typeLabel = type === 'event' ? '일정' : '할일';
+
     await deleteDoc(doc(db, type === 'event' ? 'events' : 'tasks', id));
     showToast('삭제되었습니다');
+    // 삭제 로그 — 누가 무엇을 삭제했는지 기록
+    logActivity('item_deleted', `🗑️ ${who}님이 ${typeLabel}을 삭제했습니다: ${itemTitle}`);
+    sendFamilyNotification(`${typeLabel} 삭제: ${itemTitle} (${who})`, type);
   } catch(e) {
     console.error('deleteItem error:', e);
     showToast('삭제 실패: ' + e.message);
@@ -1642,13 +1810,20 @@ function resetModal() {
 // 모달 내 삭제 버튼
 window.deleteFromModal = async function() {
   if (!editingId || !editingType) return;
-  const confirmed = await showConfirm(
-    editingType === 'event' ? '이 일정을 삭제하시겠습니까?' : '이 할일을 삭제하시겠습니까?'
-  );
+  const typeLabel = editingType === 'event' ? '일정' : '할일';
+  const confirmed = await showConfirm(`이 ${typeLabel}을 삭제하시겠습니까?`);
   if (!confirmed) return;
   try {
+    const item = editingType === 'event'
+      ? allEvents.find(e => e.id === editingId)
+      : allTasks.find(t => t.id === editingId);
+    const itemTitle = item ? item.title : '(제목 없음)';
+    const who = currentUser.displayName || currentUser.email;
+
     await deleteDoc(doc(db, editingType === 'event' ? 'events' : 'tasks', editingId));
     showToast('삭제되었습니다');
+    logActivity('item_deleted', `🗑️ ${who}님이 ${typeLabel}을 삭제했습니다: ${itemTitle}`);
+    sendFamilyNotification(`${typeLabel} 삭제: ${itemTitle} (${who})`, editingType);
     closeModal('event-modal');
   } catch(e) {
     console.error('deleteFromModal error:', e);
@@ -1683,11 +1858,16 @@ function renderAssigneeChips() {
   }
   el.innerHTML = familyMembers.map(m => {
     const sel = selectedAssignees.includes(m.uid);
+    const c = getMemberColor(m.uid);
+    const initial = escHtml((m.displayName||m.email)[0].toUpperCase());
+    const name = escHtml((m.displayName||m.email).split(' ')[0]);
     return `<button type="button" onclick="toggleAssignee('${m.uid}')" id="assignee-${m.uid}"
-      class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all text-label-md font-label-md
-             ${sel?'border-primary bg-primary text-white':'border-outline-variant bg-white text-on-surface'}">
-      <span class="w-5 h-5 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">${(m.displayName||m.email)[0].toUpperCase()}</span>
-      ${(m.displayName||m.email).split(' ')[0]}
+      class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all text-label-md font-label-md"
+      style="${sel
+        ? `background:${c.bg};color:${c.text};border-color:${c.bg};`
+        : `background:#fff;color:#1a1c1b;border-color:#c2c6d1;`}">
+      <span style="width:20px;height:20px;border-radius:50%;background:${sel?'rgba(255,255,255,0.3)':c.bg};color:${sel?c.text:'#fff'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${initial}</span>
+      ${name}
     </button>`;
   }).join('');
 }
@@ -1704,11 +1884,48 @@ window.toggleAssignee = function(uid) {
 // ─── Task filter ──────────────────────────────────────────────────────────
 window.filterTasks = function(f) {
   currentFilter = f;
+  // 기본 필터 버튼 스타일
   document.querySelectorAll('.task-filter').forEach(btn => {
+    btn.style.cssText = '';
     btn.className = 'task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors';
   });
-  document.getElementById('filter-'+f).className = 'task-filter whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary text-label-md font-label-md';
-  renderTasksPage();
+  // 선택된 기본 필터 강조
+  const basicFilters = ['all','mine','pending','done'];
+  if (basicFilters.includes(f)) {
+    const btn = document.getElementById('filter-' + f);
+    if (btn) {
+      btn.className = 'task-filter whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary text-label-md font-label-md';
+    }
+  }
+  renderTasksPage(); // 멤버 칩은 renderTasksPage 내부에서 재렌더
+};
+
+// 할일 담당자 빠른 지정
+window.quickAssignTask = async function(taskId, uid) {
+  if (!uid) return;
+  const task = allTasks.find(t => t.id === taskId);
+  if (!task) return;
+  const currentAssignees = task.assignees || [];
+  // 이미 있으면 제거, 없으면 추가 (토글)
+  const newAssignees = currentAssignees.includes(uid)
+    ? currentAssignees.filter(id => id !== uid)
+    : [...currentAssignees, uid];
+  try {
+    await updateDoc(doc(db, 'tasks', taskId), {
+      assignees:    newAssignees,
+      lastEditedBy: currentUser.uid,
+      lastEditedAt: serverTimestamp(),
+    });
+    const assigneeName = getMemberName(uid);
+    const who = currentUser.displayName || currentUser.email;
+    const action = newAssignees.includes(uid) ? '지정했습니다' : '제거했습니다';
+    logActivity('task_edited',
+      `📌 ${who}님이 ${escHtml(task.title)}의 담당자로 ${assigneeName}을(를) ${action}`);
+    showToast(`담당자 ${action.replace('했습니다','')} ✅`);
+  } catch(e) {
+    console.error('quickAssignTask error:', e);
+    showToast('지정 실패: ' + e.message);
+  }
 };
 
 // ─── Page Navigation ─────────────────────────────────────────────────────
