@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Family Hub</title>
+<title>결율 Diary</title>
 <meta name="theme-color" content="#024481"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="apple-mobile-web-app-title" content="Family Hub"/>
+<meta name="apple-mobile-web-app-title" content="결율 Diary"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -112,7 +112,7 @@ tailwind.config = {
       <div class="w-20 h-20 rounded-3xl bg-primary flex items-center justify-center shadow-lg mb-4">
         <span class="material-symbols-outlined text-on-primary fill-icon text-4xl">family_restroom</span>
       </div>
-      <h1 class="text-headline-lg font-headline-lg text-primary">Family Hub</h1>
+      <h1 class="text-headline-lg font-headline-lg text-primary">결율 Diary</h1>
       <p class="text-body-sm text-on-surface-variant mt-1">가족 모두가 함께하는 스마트 플래너</p>
     </div>
 
@@ -196,7 +196,7 @@ tailwind.config = {
         <span id="header-avatar-initial" class="material-symbols-outlined text-on-primary fill-icon text-xl">person</span>
       </div>
       <div>
-        <h1 class="text-headline-sm font-headline-sm text-primary leading-none">Family Hub</h1>
+        <h1 class="text-headline-sm font-headline-sm text-primary leading-none">결율 Diary</h1>
         <p id="header-greeting" class="text-[11px] text-on-surface-variant leading-none mt-0.5">로딩 중...</p>
       </div>
     </div>
@@ -222,6 +222,9 @@ tailwind.config = {
   </button>
   <button onclick="showPage('tasks')" id="nav-tasks" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
     <span class="material-symbols-outlined">assignment_turned_in</span>
+  </button>
+  <button onclick="showPage('routine')" id="nav-routine" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
+    <span class="material-symbols-outlined">schedule</span>
   </button>
   <button onclick="showPage('settings')" id="nav-settings" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
     <span class="material-symbols-outlined">settings</span>
@@ -344,25 +347,39 @@ tailwind.config = {
 
 <!-- ===== TASKS PAGE ===== -->
 <div id="page-tasks" class="page">
-  <main class="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-6">
-    <!-- Progress -->
-    <section class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)]">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-        <div>
-          <h2 class="text-headline-md font-headline-md text-on-surface mb-1">오늘 진행 현황</h2>
-          <p class="text-body-sm text-on-surface-variant">가족 모두 화이팅!</p>
+  <main class="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-5">
+
+    <!-- 날짜 선택 헤더 -->
+    <section class="bg-surface-container-lowest rounded-xl p-5 shadow-[0px_4px_12px_rgba(0,0,0,0.04)]">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <button onclick="changeTaskDate(-1)" class="p-2 rounded-xl hover:bg-surface-container transition-colors active:scale-90">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <div class="text-center min-w-[160px]">
+            <h2 id="tasks-date-label" class="text-headline-sm font-headline-sm text-on-surface"></h2>
+            <p id="tasks-date-badge" class="text-label-md font-label-md text-primary mt-0.5"></p>
+          </div>
+          <button onclick="changeTaskDate(1)" class="p-2 rounded-xl hover:bg-surface-container transition-colors active:scale-90">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
         </div>
-        <div class="text-right">
-          <span id="tasks-pct" class="text-headline-sm font-headline-sm text-secondary">0%</span>
-          <p id="tasks-count-label" class="text-label-md font-label-md text-outline">0 / 0 완료</p>
-        </div>
+        <button onclick="goTasksToday()" id="tasks-today-btn"
+          class="px-3 py-1.5 rounded-xl bg-primary-fixed text-primary text-label-md font-label-md hover:bg-primary-fixed-dim transition-colors hidden">
+          오늘로
+        </button>
       </div>
-      <div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
-        <div id="tasks-progress-bar" class="h-full bg-secondary w-0 transition-all duration-700 ease-out rounded-full"></div>
+      <!-- 진행바 -->
+      <div class="flex items-center gap-3">
+        <div class="flex-1 h-2.5 bg-surface-container rounded-full overflow-hidden">
+          <div id="tasks-progress-bar" class="h-full bg-secondary w-0 transition-all duration-700 ease-out rounded-full"></div>
+        </div>
+        <span id="tasks-count-label" class="text-label-md font-label-md text-outline whitespace-nowrap">0 / 0 완료</span>
+        <span id="tasks-pct" class="text-label-md font-bold text-secondary whitespace-nowrap">0%</span>
       </div>
     </section>
 
-    <!-- Filter chips -->
+    <!-- 멤버 필터 칩 -->
     <section class="space-y-2">
       <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         <button onclick="filterTasks('all')" id="filter-all" class="task-filter whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary text-label-md font-label-md">전체</button>
@@ -370,17 +387,24 @@ tailwind.config = {
         <button onclick="filterTasks('pending')" id="filter-pending" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">미완료</button>
         <button onclick="filterTasks('done')" id="filter-done" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">완료</button>
       </div>
-      <!-- 가족 멤버별 색상 필터 (동적 렌더) -->
       <div id="member-filter-chips" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar"></div>
     </section>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2">
+      <div class="lg:col-span-2 space-y-4">
+        <!-- 지나간 날짜 미완료 요약 (동적 렌더) -->
+        <div id="overdue-summary" class="hidden"></div>
+        <!-- 오늘 할일 목록 -->
         <div id="tasks-list" class="space-y-3">
           <div class="flex items-center justify-center h-32 text-on-surface-variant">
             <span class="spinner border-outline-variant border-t-primary mr-2"></span>할일 로딩 중...
           </div>
         </div>
+        <!-- 할일 추가 버튼 -->
+        <button onclick="openModal('event-modal');setModalType('task')"
+          class="w-full py-3 border-2 border-dashed border-outline-variant rounded-xl text-label-md font-bold text-outline hover:text-primary hover:border-primary transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">add</span>할일 추가
+        </button>
       </div>
 
       <!-- Leaderboard -->
@@ -398,7 +422,7 @@ tailwind.config = {
         </div>
         <div class="p-5 rounded-xl bg-secondary-container text-on-secondary-container">
           <p class="italic text-body-sm font-medium">"함께 계획하고, 함께 즐겨요!"</p>
-          <p class="text-label-md mt-2 opacity-70">— Family Hub</p>
+          <p class="text-label-md mt-2 opacity-70">— 결율 Diary</p>
         </div>
       </div>
     </div>
@@ -445,16 +469,32 @@ tailwind.config = {
         <!-- Notifications toggle -->
         <div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)]">
           <h3 class="text-headline-sm font-headline-sm text-on-surface mb-4">알림 설정</h3>
-          <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl">
+          <!-- 푸시 알림 토글 -->
+          <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl mb-3">
             <div class="flex items-center gap-3">
               <span class="material-symbols-outlined text-primary">notifications</span>
-              <span class="text-body-sm font-medium text-on-surface">푸시 알림</span>
+              <div>
+                <span class="text-body-sm font-medium text-on-surface block">푸시 알림</span>
+                <span id="notif-status-label" class="text-[11px] text-on-surface-variant">비활성화됨</span>
+              </div>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input id="notif-toggle" type="checkbox" class="sr-only peer" onchange="toggleNotifications(this.checked)"/>
               <div class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
             </label>
           </div>
+          <!-- VAPID 키 입력 -->
+          <div id="vapid-section" class="space-y-2">
+            <p class="text-label-md font-label-md text-on-surface-variant">VAPID 키 (Firebase 콘솔 → 프로젝트 설정 → 클라우드 메시징 → 웹 푸시 인증서)</p>
+            <div class="flex gap-2">
+              <div class="input-focus-ring flex-1 flex items-center bg-white border border-outline-variant rounded-xl px-3 py-2.5">
+                <input id="vapid-key-input" type="text" placeholder="VAPID 키를 입력하세요"
+                  class="w-full bg-transparent border-none focus:ring-0 text-[13px] placeholder:text-outline-variant font-mono"/>
+              </div>
+              <button onclick="saveVapidAndEnable()" class="px-3 py-2.5 bg-primary text-on-primary rounded-xl text-label-md font-label-md hover:opacity-90 active:scale-95 transition-all whitespace-nowrap">저장 후 활성화</button>
+            </div>
+          </div>
+          <p id="notif-permission-warn" class="text-[11px] text-error mt-2 hidden">브라우저 알림 권한을 허용해 주세요</p>
         </div>
 
         <!-- Sign out -->
@@ -501,6 +541,33 @@ tailwind.config = {
   </main>
 </div>
 
+
+<!-- ===== ROUTINE PAGE ===== -->
+<div id="page-routine" class="page">
+  <main class="max-w-4xl mx-auto px-4 py-6">
+    <!-- 헤더 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-headline-lg font-headline-lg text-on-surface">하루 일과</h2>
+        <p class="text-body-sm text-on-surface-variant mt-1">가족 구성원별 일과를 등록하고 관리하세요</p>
+      </div>
+      <button onclick="openRoutineModal()" class="flex items-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-xl text-label-md font-label-md hover:opacity-90 active:scale-95 transition-all shadow-md">
+        <span class="material-symbols-outlined text-[18px]">add</span>일과 추가
+      </button>
+    </div>
+
+    <!-- 개인별 탭 -->
+    <div id="routine-tabs" class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-6"></div>
+
+    <!-- 일과 목록 -->
+    <div id="routine-content" class="space-y-3">
+      <div class="flex items-center justify-center h-40 text-on-surface-variant">
+        <span class="spinner border-outline-variant border-t-primary mr-2"></span>로딩 중...
+      </div>
+    </div>
+  </main>
+</div>
+
 <!-- ===== NOTIFICATIONS PAGE ===== -->
 <div id="page-notifications" class="page">
   <main class="max-w-2xl mx-auto px-4 py-6">
@@ -535,6 +602,9 @@ tailwind.config = {
   </button>
   <button onclick="showPage('tasks')" id="mob-tasks" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
     <span class="material-symbols-outlined">assignment_turned_in</span><span class="text-label-md font-label-md">할일</span>
+  </button>
+  <button onclick="showPage('routine')" id="mob-routine" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
+    <span class="material-symbols-outlined">schedule</span><span class="text-label-md font-label-md">일과</span>
   </button>
   <button onclick="showPage('settings')" id="mob-settings" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
     <span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">설정</span>
@@ -634,6 +704,84 @@ tailwind.config = {
   </div>
 </div>
 
+
+<!-- ═══════════ ROUTINE MODAL ═══════════ -->
+<div id="routine-modal" class="modal-bg">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="flex items-center justify-between mb-5">
+      <h2 id="routine-modal-title" class="text-headline-md font-headline-md text-primary">일과 추가</h2>
+      <div class="flex gap-1">
+        <button id="routine-delete-btn" onclick="deleteRoutineItem()" class="hidden p-2 rounded-full hover:bg-error-container/20 text-error transition-colors">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+        <button onclick="closeModal('routine-modal')" class="p-2 rounded-full hover:bg-surface-container text-on-surface-variant">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="space-y-4">
+      <!-- 담당자 -->
+      <div>
+        <label class="text-label-md font-label-md text-primary uppercase tracking-wider mb-2 block">대상</label>
+        <div id="routine-assignee-chips" class="flex flex-wrap gap-2"></div>
+      </div>
+      <!-- 시작/종료 시간 -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-label-md font-label-md text-on-surface-variant mb-1.5 block">시작 시간</label>
+          <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-3 py-3">
+            <span class="material-symbols-outlined text-outline mr-2 text-[18px]">schedule</span>
+            <input id="routine-time-start" type="time" class="w-full bg-transparent border-none focus:ring-0 text-body-md"/>
+          </div>
+        </div>
+        <div>
+          <label class="text-label-md font-label-md text-on-surface-variant mb-1.5 block">종료 시간</label>
+          <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-3 py-3">
+            <span class="material-symbols-outlined text-outline mr-2 text-[18px]">schedule</span>
+            <input id="routine-time-end" type="time" class="w-full bg-transparent border-none focus:ring-0 text-body-md"/>
+          </div>
+        </div>
+      </div>
+      <!-- 활동 내용 -->
+      <div>
+        <label class="text-label-md font-label-md text-on-surface-variant mb-1.5 block">활동 내용</label>
+        <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-4 py-3">
+          <span class="material-symbols-outlined text-outline mr-3 text-[18px]">edit_note</span>
+          <input id="routine-activity" type="text" placeholder="예: 기상, 세수/양치, 아침식사"
+            class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+        </div>
+      </div>
+      <!-- 카테고리 -->
+      <div>
+        <label class="text-label-md font-label-md text-on-surface-variant mb-1.5 block">카테고리</label>
+        <div class="flex flex-wrap gap-2" id="routine-category-chips">
+          <button type="button" onclick="setRoutineCategory('기상/취침')" class="rcat-btn px-3 py-1.5 rounded-full border-2 border-outline-variant text-label-md font-label-md text-on-surface-variant hover:border-primary transition-colors">🌅 기상/취침</button>
+          <button type="button" onclick="setRoutineCategory('식사')" class="rcat-btn px-3 py-1.5 rounded-full border-2 border-outline-variant text-label-md font-label-md text-on-surface-variant hover:border-primary transition-colors">🍽️ 식사</button>
+          <button type="button" onclick="setRoutineCategory('위생')" class="rcat-btn px-3 py-1.5 rounded-full border-2 border-outline-variant text-label-md font-label-md text-on-surface-variant hover:border-primary transition-colors">🚿 위생</button>
+          <button type="button" onclick="setRoutineCategory('운동')" class="rcat-btn px-3 py-1.5 rounded-full border-2 border-outline-variant text-label-md font-label-md text-on-surface-variant hover:border-primary transition-colors">🏃 운동</button>
+          <button type="button" onclick="setRoutineCategory('공부/업무')" class="rcat-btn px-3 py-1.5 rounded-full border-2 border-outline-variant text-label-md font-label-md text-on-surface-variant hover:border-primary transition-colors">📚 공부/업무</button>
+          <button type="button" onclick="setRoutineCategory('이동')" class="rcat-btn px-3 py-1.5 rounded-full border-2 border-outline-variant text-label-md font-label-md text-on-surface-variant hover:border-primary transition-colors">🚗 이동</button>
+          <button type="button" onclick="setRoutineCategory('기타')" class="rcat-btn px-3 py-1.5 rounded-full border-2 border-outline-variant text-label-md font-label-md text-on-surface-variant hover:border-primary transition-colors">✨ 기타</button>
+        </div>
+      </div>
+      <!-- 메모 -->
+      <div class="input-focus-ring flex items-start bg-white border border-outline-variant rounded-xl px-4 py-3">
+        <span class="material-symbols-outlined text-outline mr-3 mt-0.5 text-[18px]">notes</span>
+        <textarea id="routine-note" rows="2" placeholder="메모 (선택)"
+          class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant resize-none"></textarea>
+      </div>
+      <!-- 저장 버튼 -->
+      <div class="flex gap-3 pt-1">
+        <button onclick="saveRoutineItem()" id="btn-save-routine"
+          class="flex-1 bg-primary text-white h-12 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform">
+          <span class="material-symbols-outlined">check_circle</span>저장
+        </button>
+        <button onclick="closeModal('routine-modal')" class="px-6 bg-surface-container-high text-on-surface-variant h-12 rounded-xl hover:bg-surface-container-highest transition-colors">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Modal -->
 <div id="confirm-overlay" class="modal-bg" style="z-index:9999;">
   <div style="background:#faf9f7;border-radius:1rem;padding:1.5rem;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
@@ -654,7 +802,7 @@ tailwind.config = {
     <span class="material-symbols-outlined" style="color:#fff;font-size:22px;">family_restroom</span>
   </div>
   <div style="flex:1;">
-    <p style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;margin:0;">Family Hub 설치</p>
+    <p style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;margin:0;">결율 Diary 설치</p>
     <p style="font-size:12px;opacity:0.8;margin:2px 0 0 0;">홈 화면에 추가해서 앱처럼 사용하세요</p>
   </div>
   <button onclick="installApp()" style="background:#fff;color:#024481;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;">설치</button>
@@ -789,7 +937,7 @@ async function initUserProfile(user) {
       createdAt: serverTimestamp(),
       members: [user.uid]
     });
-    logActivity('family_joined', `${user.displayName || '사용자'}님이 Family Hub를 시작했습니다`);
+    logActivity('family_joined', `${user.displayName || '사용자'}님이 결율 Diary를 시작했습니다`);
   } else {
     familyId = snap.data().familyId;
   }
@@ -803,6 +951,8 @@ function showApp() {
   document.getElementById('bottom-nav').classList.remove('hidden');
   document.getElementById('bottom-nav').style.display = 'flex';
   updateHeaderUI();
+  // 알림 UI 초기화 (저장된 VAPID 키 복원)
+  setTimeout(initNotifUI, 500);
 }
 
 function hideApp() {
@@ -823,6 +973,7 @@ function updateHeaderUI() {
   document.getElementById('header-greeting').textContent = `${greet}, ${name.split(' ')[0]}님`;
   document.getElementById('home-greeting').textContent = `${greet}, ${name.split(' ')[0]}님! 👋`;
   const today = new Date();
+  // 로컬 날짜 기준으로 표시
   document.getElementById('home-date').textContent =
     `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${['일','월','화','수','목','금','토'][today.getDay()]})`;
 
@@ -897,6 +1048,7 @@ async function loadFamilyData() {
       });
     renderHomeTasks();
     renderTasksPage();
+    renderOverdueSummary();
     renderLeaderboard();
   }, err => {
     console.error('[Tasks] 쿼리 오류:', err.message);
@@ -939,8 +1091,14 @@ async function loadFamilyData() {
 }
 
 // ─── Render: Home Events ─────────────────────────────────────────────────
+// 로컬 시간대(KST 등) 기준 오늘 날짜 반환 — UTC 변환 시 날짜 어긋남 방지
+function getLocalToday() {
+  const d = new Date();
+  return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+}
+
 function renderHomeEvents() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalToday();
   const todayEvents = allEvents.filter(e => e.date === today);
   const el = document.getElementById('home-events-list');
   if (!el) return;
@@ -964,54 +1122,74 @@ function renderHomeEvents() {
   `).join('');
 }
 
-// ─── Render: Home Tasks (멤버별 그룹) ────────────────────────────────────
+// ─── Render: Home Tasks (멤버별 그룹, 오늘 기준) ───────────────────────
 function renderHomeTasks() {
   const countEl = document.getElementById('home-task-count');
   const barEl   = document.getElementById('home-task-bar');
   const listEl  = document.getElementById('home-tasks-list');
   if (!countEl || !barEl || !listEl) return;
 
-  const done  = allTasks.filter(t => t.done).length;
-  const total = allTasks.length;
+  const today = getLocalToday();
+
+  // ── 오늘 기준 할일 필터 ──────────────────────────────────────────────
+  // 할일에 날짜 필드가 없을 수 있으므로 두 가지 기준 모두 적용:
+  // 1) dueDate 필드가 오늘인 것
+  // 2) dueDate 필드가 없는 것 (날짜 미지정 = 오늘로 간주하되 완료된 것은 당일만)
+  // 단, 이미 완료(done=true)이고 어제 이전에 완료된 것은 제외
+  const todayTasks = allTasks.filter(t => {
+    // dueDate가 있으면 오늘 것만
+    if (t.dueDate) return t.dueDate === today;
+    // dueDate 없으면 표시 (날짜 미지정 할일)
+    // 단, 완료됐고 오늘 이전에 생성된 경우 제외
+    if (t.done) {
+      // 완료 처리된 날짜가 오늘이면 표시, 아니면 숨김
+      const doneAt = t.updatedAt?.toDate?.() || t.updatedAt;
+      if (!doneAt) return true; // 날짜 정보 없으면 표시
+      const doneDate = [
+        doneAt.getFullYear(),
+        String(doneAt.getMonth()+1).padStart(2,'0'),
+        String(doneAt.getDate()).padStart(2,'0')
+      ].join('-');
+      return doneDate === today;
+    }
+    return true; // 미완료 + 날짜 미지정 → 항상 표시
+  });
+
+  const done  = todayTasks.filter(t => t.done).length;
+  const total = todayTasks.length;
   const pct   = total ? Math.round(done / total * 100) : 0;
   countEl.textContent = `${done} / ${total} 완료`;
   barEl.style.width   = pct + '%';
 
   if (total === 0) {
-    listEl.innerHTML = `<p class="text-body-sm text-on-surface-variant text-center py-4">등록된 할일이 없습니다</p>`;
+    listEl.innerHTML = `<div class="flex flex-col items-center py-8 gap-3 text-on-surface-variant">
+      <span class="material-symbols-outlined text-4xl">check_circle</span>
+      <p class="text-body-sm">오늘 할일이 없습니다</p>
+      <button onclick="openModal('event-modal');setModalType('task')" class="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-md font-label-md hover:opacity-90 transition-opacity">+ 할일 추가</button>
+    </div>`;
     return;
   }
 
-  // ── 멤버별로 할일 그룹화 ──────────────────────────────
-  // 담당자가 있는 할일: 각 담당자 그룹에 추가
-  // 담당자 없는 할일: '미배정' 그룹
-  const groups = {};  // uid → { member, tasks[] }
-
-  // 가족 멤버 순서대로 그룹 초기화
-  familyMembers.forEach(m => {
-    groups[m.uid] = { member: m, tasks: [] };
-  });
+  // ── 멤버별로 할일 그룹화 ────────────────────────────────────────────
+  const groups = {};
+  familyMembers.forEach(m => { groups[m.uid] = { member: m, tasks: [] }; });
   groups['unassigned'] = { member: null, tasks: [] };
 
-  allTasks.forEach(t => {
+  todayTasks.forEach(t => {
     const assignees = t.assignees || [];
     if (assignees.length === 0) {
       groups['unassigned'].tasks.push(t);
     } else {
       assignees.forEach(uid => {
         if (groups[uid]) groups[uid].tasks.push(t);
-        else groups['unassigned'].tasks.push(t); // 알 수 없는 uid
+        else groups['unassigned'].tasks.push(t);
       });
     }
   });
 
-  // ── 그룹별 HTML 생성 ──────────────────────────────────
   let html = '';
 
-  const groupKeys = [
-    ...familyMembers.map(m => m.uid),
-    'unassigned'
-  ];
+  const groupKeys = [...familyMembers.map(m => m.uid), 'unassigned'];
 
   groupKeys.forEach(key => {
     const group = groups[key];
@@ -1025,30 +1203,26 @@ function renderHomeTasks() {
         <span class="material-symbols-outlined" style="font-size:16px;color:#737781;">person_off</span>
       </div>`;
 
-    const groupDone    = group.tasks.filter(t => t.done).length;
-    const groupTotal   = group.tasks.length;
-    const groupPct     = Math.round(groupDone / groupTotal * 100);
+    const groupDone  = group.tasks.filter(t => t.done).length;
+    const groupTotal = group.tasks.length;
+    const groupPct   = Math.round(groupDone / groupTotal * 100);
 
-    // 할일 카드들
     const taskCards = group.tasks.map(t => {
       const priColor = t.priority === 'high' ? '#ba1a1a' : t.priority === 'low' ? '#737781' : c.bg;
       return `
       <div class="flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer hover:shadow-sm group/task"
            style="border-color:${t.done ? '#c2c6d1' : c.bg+'33'}; background:${t.done ? '#faf9f7' : c.bg+'08'};"
            onclick="openEditTask('${t.id}')">
-        <!-- 체크박스 -->
         <div onclick="event.stopPropagation();toggleTask('${t.id}',${!t.done})"
              class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer"
              style="border-color:${t.done ? '#006d41' : c.bg}; background:${t.done ? '#006d41' : 'transparent'};">
           ${t.done ? '<span class="material-symbols-outlined text-white fill-icon" style="font-size:14px;">check</span>' : ''}
         </div>
-        <!-- 제목 + 우선순위 -->
         <div class="flex-1 min-w-0">
           <p class="text-body-sm font-medium truncate ${t.done ? 'line-through text-outline' : 'text-on-surface'}">${escHtml(t.title)}</p>
           ${t.priority === 'high' ? `<span class="text-[10px] font-bold" style="color:${priColor};">● 높음</span>` :
             t.priority === 'low'  ? `<span class="text-[10px] text-outline">● 낮음</span>` : ''}
         </div>
-        <!-- 편집 버튼 -->
         <span class="material-symbols-outlined text-[16px] opacity-0 group-hover/task:opacity-40 transition-opacity flex-shrink-0"
               style="color:${c.bg};">edit</span>
       </div>`;
@@ -1056,22 +1230,18 @@ function renderHomeTasks() {
 
     html += `
     <div class="rounded-xl overflow-hidden border" style="border-color:${c.bg}33;">
-      <!-- 그룹 헤더 -->
       <div class="flex items-center gap-2.5 px-3 py-2.5" style="background:${c.bg}15;">
         ${avatarHtml}
         <span class="text-body-sm font-bold flex-1" style="color:${c.bg};">${name}</span>
         <div class="flex items-center gap-1.5">
-          <!-- 미니 진행바 -->
           <div class="w-16 h-1.5 rounded-full" style="background:${c.bg}25;">
             <div class="h-full rounded-full transition-all" style="width:${groupPct}%;background:${c.bg};"></div>
           </div>
           <span class="text-[10px] font-bold" style="color:${c.bg};">${groupDone}/${groupTotal}</span>
         </div>
       </div>
-      <!-- 할일 목록 -->
       <div class="p-2 flex flex-col gap-1.5">
         ${taskCards}
-        <!-- 이 멤버에게 할일 추가 -->
         <button onclick="openModalForMember('${m ? m.uid : ''}')"
           class="w-full py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 mt-0.5 opacity-60 hover:opacity-100"
           style="color:${c.bg};border:1px dashed ${c.bg}55;">
@@ -1081,8 +1251,9 @@ function renderHomeTasks() {
     </div>`;
   });
 
-  listEl.innerHTML = html || `<p class="text-body-sm text-on-surface-variant text-center py-4">할일이 없습니다</p>`;
+  listEl.innerHTML = html || `<p class="text-body-sm text-on-surface-variant text-center py-4">오늘 할일이 없습니다</p>`;
 }
+
 
 // ─── Render: Member filter chips (Tasks page) ────────────────────────────
 function renderMemberFilterChips() {
@@ -1103,12 +1274,71 @@ function renderMemberFilterChips() {
   }).join('');
 }
 
+// ─── Tasks 날짜 상태 ────────────────────────────────────────────────────
+let taskViewDate = getLocalToday();  // 현재 보고 있는 날짜 (YYYY-MM-DD)
+
+function formatTaskDateLabel(dateStr) {
+  const today = getLocalToday();
+  const d     = new Date(dateStr + 'T00:00:00');
+  const dow   = ['일','월','화','수','목','금','토'][d.getDay()];
+  const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${dow})`;
+  if (dateStr === today)            return { label, badge: '오늘', isToday: true, isPast: false };
+  const diff = Math.round((new Date(today + 'T00:00:00') - d) / 86400000);
+  if (diff === 1)                   return { label, badge: '어제', isToday: false, isPast: true };
+  if (diff >  1)                    return { label, badge: `${diff}일 전`, isToday: false, isPast: true };
+  if (diff === -1)                  return { label, badge: '내일', isToday: false, isPast: false };
+  return { label, badge: `${Math.abs(diff)}일 후`, isToday: false, isPast: false };
+}
+
+window.changeTaskDate = function(delta) {
+  const d = new Date(taskViewDate + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  taskViewDate = [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+  renderTasksPage();
+};
+
+window.goTasksToday = function() {
+  taskViewDate = getLocalToday();
+  renderTasksPage();
+};
+
 // ─── Render: Tasks Page ──────────────────────────────────────────────────
 function renderTasksPage() {
   const el = document.getElementById('tasks-list');
   if (!el) return;
 
-  let tasks = [...allTasks];
+  const today    = getLocalToday();
+  const isPast   = taskViewDate < today;
+  const { label, badge, isToday } = formatTaskDateLabel(taskViewDate);
+
+  // 날짜 헤더 업데이트
+  const dateLabel = document.getElementById('tasks-date-label');
+  const dateBadge = document.getElementById('tasks-date-badge');
+  const todayBtn  = document.getElementById('tasks-today-btn');
+  if (dateLabel) dateLabel.textContent = label;
+  if (dateBadge) {
+    dateBadge.textContent = badge;
+    dateBadge.style.color = isPast ? '#ba1a1a' : isToday ? '#024481' : '#006d41';
+  }
+  if (todayBtn) todayBtn.classList.toggle('hidden', isToday);
+
+  // ── 선택 날짜 기준 할일 필터 ──────────────────────────────────────────
+  // dueDate가 있으면 그 날짜, 없으면 생성일 기준
+  let dateTasks = allTasks.filter(t => {
+    if (t.dueDate) return t.dueDate === taskViewDate;
+    // dueDate 없는 경우: 생성일 기준
+    const createdAt = t.createdAt?.toDate?.() || (t.createdAt ? new Date(t.createdAt) : null);
+    if (!createdAt) return taskViewDate === today; // 날짜 없으면 오늘만
+    const cDate = [
+      createdAt.getFullYear(),
+      String(createdAt.getMonth()+1).padStart(2,'0'),
+      String(createdAt.getDate()).padStart(2,'0')
+    ].join('-');
+    return cDate === taskViewDate;
+  });
+
+  // 멤버/상태 필터 추가 적용
+  let tasks = [...dateTasks];
   if (currentFilter === 'mine')    tasks = tasks.filter(t => t.assignees?.includes(currentUser.uid));
   if (currentFilter === 'pending') tasks = tasks.filter(t => !t.done);
   if (currentFilter === 'done')    tasks = tasks.filter(t => t.done);
@@ -1117,10 +1347,10 @@ function renderTasksPage() {
     tasks = tasks.filter(t => t.assignees?.includes(uid));
   }
 
-  const done  = allTasks.filter(t => t.done).length;
-  const total = allTasks.length;
+  // 진행바 업데이트 (선택 날짜 기준)
+  const done  = dateTasks.filter(t => t.done).length;
+  const total = dateTasks.length;
   const pct   = total ? Math.round(done/total*100) : 0;
-
   const pctEl = document.getElementById('tasks-pct');
   const cntEl = document.getElementById('tasks-count-label');
   const barEl = document.getElementById('tasks-progress-bar');
@@ -1131,58 +1361,51 @@ function renderTasksPage() {
   // 멤버 필터 칩 재렌더
   renderMemberFilterChips();
 
+  // ── 지나간 날짜 미완료 요약 ───────────────────────────────────────────
+  renderOverdueSummary();
+
+  // ── 할일 목록 렌더 ──────────────────────────────────────────────────
+  const priBorderColor = { high:'border-error', mid:'border-primary', low:'border-outline-variant' };
+
   if (tasks.length === 0) {
-    el.innerHTML = `<div class="flex flex-col items-center justify-center h-40 gap-3 text-on-surface-variant">
+    el.innerHTML = `<div class="flex flex-col items-center justify-center py-12 gap-3 text-on-surface-variant">
       <span class="material-symbols-outlined text-4xl">checklist</span>
-      <p class="text-body-sm">할일이 없습니다</p>
-      <button onclick="openModal('event-modal');setModalType('task')" class="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-md font-label-md">+ 추가</button>
+      <p class="text-body-sm">${escHtml(label)}의 할일이 없습니다</p>
+      <button onclick="openModal('event-modal');setModalType('task')" class="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-md font-label-md hover:opacity-90 transition-opacity">+ 할일 추가</button>
     </div>`;
     return;
   }
 
-  const priBorderColor = { high:'border-error', mid:'border-primary', low:'border-outline-variant' };
+  const assignOptions = (t) => familyMembers.map(m => {
+    const sel = (t.assignees||[]).includes(m.uid);
+    return `<option value="${m.uid}" ${sel?'selected':''}>${escHtml((m.displayName||m.email).split(' ')[0])}</option>`;
+  }).join('');
 
   el.innerHTML = tasks.map(t => {
-    const borderColor = priBorderColor[t.priority||'mid'] || 'border-primary';
-
-    // 담당자 아바타 (색상 적용)
+    const borderColor    = priBorderColor[t.priority||'mid'] || 'border-primary';
     const assigneeAvatars = (t.assignees||[]).map(uid => memberAvatar(uid, 24)).join('');
-
-    // 담당자 지정 드롭다운 옵션
-    const assignOptions = familyMembers.map(m => {
-      const sel = (t.assignees||[]).includes(m.uid);
-      return `<option value="${m.uid}" ${sel?'selected':''}>${escHtml((m.displayName||m.email).split(' ')[0])}</option>`;
-    }).join('');
-
     return `
     <div class="group bg-surface-container-lowest p-4 rounded-xl shadow-[0px_2px_8px_rgba(0,0,0,0.04)] border-l-4 ${borderColor} transition-all duration-200 hover:-translate-y-0.5">
       <div class="flex items-center gap-3">
-        <!-- 완료 체크박스 -->
         <input type="checkbox" ${t.done?'checked':''}
                onchange="toggleTask('${t.id}',this.checked)"
                class="w-5 h-5 rounded border-outline-variant text-primary cursor-pointer flex-shrink-0"/>
-
-        <!-- 내용 영역 -->
         <div class="flex-1 min-w-0 cursor-pointer" onclick="openEditTask('${t.id}')">
           <p class="text-body-md font-semibold text-on-surface truncate ${t.done?'line-through opacity-50':''}">${escHtml(t.title)}</p>
           <div class="flex items-center gap-2 mt-1.5 flex-wrap">
             ${t.priority==='high'?'<span class="text-[10px] font-bold text-error bg-error-container/30 px-1.5 py-0.5 rounded">높음</span>':''}
-            <!-- 담당자 아바타 -->
             <div class="flex gap-1 items-center">${assigneeAvatars || '<span class="text-[10px] text-outline">담당자 없음</span>'}</div>
             ${t.note ? `<span class="text-[11px] text-on-surface-variant truncate max-w-[100px]">${escHtml(t.note)}</span>` : ''}
             ${t.lastEditedBy ? `<span class="text-[10px] text-outline">✏️ ${escHtml(getMemberName(t.lastEditedBy))}</span>` : ''}
           </div>
         </div>
-
-        <!-- 액션 버튼 (hover 시 표시) -->
         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 items-center">
-          <!-- 담당자 빠른 지정 드롭다운 -->
           <div class="relative">
             <select onchange="quickAssignTask('${t.id}',this.value)" onclick="event.stopPropagation()"
               class="appearance-none text-[11px] font-medium bg-surface-container border border-outline-variant rounded-lg px-2 py-1 cursor-pointer text-on-surface-variant hover:border-primary transition-colors pr-5 max-w-[90px]"
               title="담당자 변경">
               <option value="">담당자 지정</option>
-              ${assignOptions}
+              ${assignOptions(t)}
             </select>
             <span class="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-[12px] text-outline pointer-events-none">expand_more</span>
           </div>
@@ -1197,6 +1420,121 @@ function renderTasksPage() {
     </div>`;
   }).join('');
 }
+
+// ─── 지나간 날짜 미완료 요약 ─────────────────────────────────────────────
+function renderOverdueSummary() {
+  const el = document.getElementById('overdue-summary');
+  if (!el) return;
+
+  const today = getLocalToday();
+
+  // 오늘 이전에 생성되거나 dueDate가 지난 미완료 할일 수집
+  const overdueTasks = allTasks.filter(t => {
+    if (t.done) return false; // 완료된 것 제외
+    // dueDate 있으면 그 날짜 기준
+    if (t.dueDate) return t.dueDate < today;
+    // dueDate 없으면 createdAt 기준
+    const createdAt = t.createdAt?.toDate?.() || (t.createdAt ? new Date(t.createdAt) : null);
+    if (!createdAt) return false;
+    const cDate = [
+      createdAt.getFullYear(),
+      String(createdAt.getMonth()+1).padStart(2,'0'),
+      String(createdAt.getDate()).padStart(2,'0')
+    ].join('-');
+    return cDate < today;
+  });
+
+  if (overdueTasks.length === 0) {
+    el.classList.add('hidden');
+    el.innerHTML = '';
+    return;
+  }
+
+  // 날짜별 그룹화
+  const dateGroups = {}; // dateStr → tasks[]
+  overdueTasks.forEach(t => {
+    let dateStr = t.dueDate || null;
+    if (!dateStr) {
+      const createdAt = t.createdAt?.toDate?.() || (t.createdAt ? new Date(t.createdAt) : null);
+      if (createdAt) {
+        dateStr = [
+          createdAt.getFullYear(),
+          String(createdAt.getMonth()+1).padStart(2,'0'),
+          String(createdAt.getDate()).padStart(2,'0')
+        ].join('-');
+      }
+    }
+    if (!dateStr) return;
+    if (!dateGroups[dateStr]) dateGroups[dateStr] = [];
+    dateGroups[dateStr].push(t);
+  });
+
+  // 날짜 최신순 정렬
+  const sortedDates = Object.keys(dateGroups).sort((a,b) => b.localeCompare(a));
+
+  // 날짜별 → 담당자별 집계
+  const rows = sortedDates.map(dateStr => {
+    const dTasks  = dateGroups[dateStr];
+    const d       = new Date(dateStr + 'T00:00:00');
+    const dow     = ['일','월','화','수','목','금','토'][d.getDay()];
+    const dateLabel = `${d.getMonth()+1}월 ${d.getDate()}일 (${dow})`;
+    const diff    = Math.round((new Date(today + 'T00:00:00') - d) / 86400000);
+    const agoLabel = diff === 1 ? '어제' : `${diff}일 전`;
+
+    // 담당자별 집계
+    const memberStats = {}; // uid → { name, pending }
+    dTasks.forEach(t => {
+      const assignees = t.assignees || [];
+      if (assignees.length === 0) {
+        if (!memberStats['none']) memberStats['none'] = { name:'미배정', uid:null, pending:0 };
+        memberStats['none'].pending++;
+      } else {
+        assignees.forEach(uid => {
+          if (!memberStats[uid]) {
+            memberStats[uid] = { name: getMemberName(uid), uid, pending: 0 };
+          }
+          memberStats[uid].pending++;
+        });
+      }
+    });
+
+    const statsHtml = Object.values(memberStats).map(s => {
+      const c   = s.uid ? getMemberColor(s.uid) : { bg:'#737781' };
+      const av  = s.uid ? memberAvatar(s.uid, 18) : '';
+      return `<div class="flex items-center gap-1.5 text-[12px]" style="color:${c.bg};">
+        ${av}
+        <span class="font-bold">${escHtml(s.name)}</span>
+        <span class="text-error font-bold">미완료 ${s.pending}건</span>
+      </div>`;
+    }).join('');
+
+    return `
+    <div class="flex items-start gap-3 p-3.5 rounded-xl border border-error/20 bg-error-container/10 cursor-pointer hover:bg-error-container/20 transition-colors"
+         onclick="taskViewDate='${dateStr}';renderTasksPage()">
+      <span class="material-symbols-outlined text-error text-[20px] flex-shrink-0 mt-0.5">warning</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1.5">
+          <span class="text-body-sm font-bold text-on-surface">${dateLabel}</span>
+          <span class="text-[10px] font-bold text-error bg-error-container px-1.5 py-0.5 rounded-full">${agoLabel} · 미완료 ${dTasks.length}건</span>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-1">${statsHtml}</div>
+      </div>
+      <span class="material-symbols-outlined text-[16px] text-error/60 flex-shrink-0 mt-0.5">chevron_right</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+  <div class="rounded-xl overflow-hidden border border-error/30">
+    <div class="flex items-center gap-2 px-4 py-3 bg-error-container/20 border-b border-error/20">
+      <span class="material-symbols-outlined text-error text-[18px]">assignment_late</span>
+      <span class="text-body-sm font-bold text-error">미완료 항목 (${overdueTasks.length}건)</span>
+      <span class="text-[11px] text-error/70 ml-auto">클릭하면 해당 날짜로 이동</span>
+    </div>
+    <div class="divide-y divide-error/10">${rows}</div>
+  </div>`;
+  el.classList.remove('hidden');
+}
+
 
 // ─── Render: Leaderboard ─────────────────────────────────────────────────
 function renderLeaderboard() {
@@ -1537,7 +1875,7 @@ window.saveItem = async function() {
       const data = {
         familyId,
         title:     escHtml(title),
-        date:      document.getElementById('modal-date').value || new Date().toISOString().slice(0,10),
+        date:      document.getElementById('modal-date').value || getLocalToday(),
         timeStart: document.getElementById('modal-time-start').value || '',
         timeEnd:   document.getElementById('modal-time-end').value || '',
         location:  escHtml(document.getElementById('modal-location').value.trim()),
@@ -1728,31 +2066,235 @@ window.copyInviteCode = function() {
   navigator.clipboard.writeText(familyId).then(() => showToast('코드가 복사되었습니다 📋'));
 };
 
-// ─── Notifications (FCM) ────────────────────────────────────────────────
-window.toggleNotifications = async function(enabled) {
-  if (!enabled || !messaging) return;
-  try {
-    const token = await getToken(messaging, { vapidKey: 'YOUR_VAPID_KEY_HERE' });
-    if (token) {
-      await updateDoc(doc(db, 'users', currentUser.uid), { fcmToken: token });
-      showToast('알림이 활성화되었습니다 🔔');
+// ─── Notifications (FCM) 완전 구현 ─────────────────────────────────────
+// VAPID 키를 로컬스토리지에 저장/로드
+function getStoredVapidKey() {
+  try { return localStorage.getItem('gyeolryul_vapid_key') || ''; } catch { return ''; }
+}
+function saveStoredVapidKey(key) {
+  try { localStorage.setItem('gyeolryul_vapid_key', key); } catch {}
+}
+
+// 페이지 로드 시 저장된 VAPID 키 복원
+function initNotifUI() {
+  const stored = getStoredVapidKey();
+  const input  = document.getElementById('vapid-key-input');
+  if (input && stored) input.value = stored;
+
+  // 브라우저 알림 권한 상태 표시
+  if ('Notification' in window) {
+    const perm = Notification.permission;
+    const lbl  = document.getElementById('notif-status-label');
+    const warn = document.getElementById('notif-permission-warn');
+    if (perm === 'granted') {
+      if (lbl) lbl.textContent = stored ? '활성화됨 🔔' : 'VAPID 키 필요';
+      if (warn) warn.classList.add('hidden');
+    } else if (perm === 'denied') {
+      if (lbl) lbl.textContent = '브라우저에서 차단됨';
+      if (warn) warn.classList.remove('hidden');
+    } else {
+      if (lbl) lbl.textContent = '권한 미허용 상태';
     }
-  } catch(e) {
-    document.getElementById('notif-toggle').checked = false;
-    showToast('알림 설정 실패: 브라우저 권한을 확인하세요');
   }
+}
+
+// VAPID 키 저장 후 알림 활성화
+window.saveVapidAndEnable = async function() {
+  const input = document.getElementById('vapid-key-input');
+  const key   = input?.value?.trim();
+  if (!key) { showToast('VAPID 키를 입력하세요'); return; }
+  saveStoredVapidKey(key);
+  showToast('VAPID 키가 저장되었습니다. 알림을 활성화합니다...');
+  await enablePushNotifications(key);
 };
 
-if (messaging) {
-  onMessage(messaging, payload => {
-    showToast(`🔔 ${payload.notification?.title || '새 알림'}`);
+// 알림 토글
+window.toggleNotifications = async function(enabled) {
+  if (!enabled) {
+    showToast('알림이 비활성화되었습니다');
+    const lbl = document.getElementById('notif-status-label');
+    if (lbl) lbl.textContent = '비활성화됨';
+    return;
+  }
+  const vapidKey = getStoredVapidKey();
+  if (!vapidKey) {
+    document.getElementById('notif-toggle').checked = false;
+    document.getElementById('vapid-section').scrollIntoView({ behavior:'smooth' });
+    showToast('먼저 VAPID 키를 입력하고 저장하세요');
+    return;
+  }
+  await enablePushNotifications(vapidKey);
+};
+
+async function enablePushNotifications(vapidKey) {
+  const toggle = document.getElementById('notif-toggle');
+  const lbl    = document.getElementById('notif-status-label');
+  const warn   = document.getElementById('notif-permission-warn');
+
+  // 1. 브라우저 알림 권한 요청
+  if (!('Notification' in window)) {
+    showToast('이 브라우저는 알림을 지원하지 않습니다');
+    if (toggle) toggle.checked = false;
+    return;
+  }
+  let permission = Notification.permission;
+  if (permission === 'default') {
+    permission = await Notification.requestPermission();
+  }
+  if (permission !== 'granted') {
+    if (toggle) toggle.checked = false;
+    if (warn)   warn.classList.remove('hidden');
+    if (lbl)    lbl.textContent = '브라우저에서 알림을 허용해 주세요';
+    showToast('❌ 브라우저 알림 권한이 없습니다. 주소창 옆 자물쇠 아이콘을 클릭해 허용하세요');
+    return;
+  }
+  if (warn) warn.classList.add('hidden');
+
+  // 2. FCM messaging 초기화
+  if (!messaging) {
+    try { messaging = getMessaging(app); } catch(e) {
+      showToast('FCM 초기화 실패: ' + e.message);
+      if (toggle) toggle.checked = false;
+      return;
+    }
+  }
+
+  // 3. Service Worker 등록 (Blob URL 방식 - 단일 HTML 파일에서 FCM 지원)
+  try {
+    let swReg = null;
+    if ('serviceWorker' in navigator) {
+      // 기존 등록 확인
+      const regs = await navigator.serviceWorker.getRegistrations();
+      swReg = regs.find(r => r.active?.scriptURL?.includes('firebase-messaging'));
+
+      if (!swReg) {
+        // Blob URL로 인라인 서비스워커 등록
+        const swCode = `
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+firebase.initializeApp({
+  apiKey: "${API_KEY}",
+  authDomain: "${PROJECT_ID}.firebaseapp.com",
+  projectId: "${PROJECT_ID}",
+  storageBucket: "${PROJECT_ID}.firebasestorage.app",
+  messagingSenderId: "${MESSAGING_SENDER_ID}",
+  appId: "{APP_ID}"
+});
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage(payload => {
+  const title = payload.notification?.title || '결율 Diary';
+  const body  = payload.notification?.body  || payload.data?.message || '새 알림이 있습니다';
+  self.registration.showNotification(title, {
+    body,
+    icon: '/icon-192x192.png',
+    badge: '/icon-72x72.png',
+    data: payload.data,
+    requireInteraction: false,
   });
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(clients.openWindow('/'));
+});
+        `.trim();
+
+        const blob  = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        swReg = await navigator.serviceWorker.register(swUrl, { scope: '/' });
+        await navigator.serviceWorker.ready;
+        console.log('[FCM SW] 등록 완료');
+      }
+    }
+
+    // 4. FCM 토큰 발급
+    const token = await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: swReg || undefined
+    });
+
+    if (!token) {
+      showToast('FCM 토큰 발급 실패: VAPID 키를 확인하세요');
+      if (toggle) toggle.checked = false;
+      return;
+    }
+
+    // 5. Firestore에 토큰 저장
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      fcmToken:    token,
+      fcmEnabled:  true,
+      fcmUpdatedAt: serverTimestamp()
+    });
+
+    if (toggle) toggle.checked = true;
+    if (lbl)    lbl.textContent = '활성화됨 🔔';
+    showToast('푸시 알림이 활성화되었습니다 🔔');
+    console.log('[FCM] 토큰:', token);
+
+    // 6. 포그라운드 알림 수신
+    onMessage(messaging, payload => {
+      const title = payload.notification?.title || '결율 Diary';
+      const body  = payload.notification?.body  || payload.data?.message || '';
+      showToast(`🔔 ${title}${body ? ': ' + body : ''}`);
+      // 인앱 알림 배너
+      showInAppNotification(title, body);
+    });
+
+  } catch(e) {
+    console.error('[FCM] 오류:', e);
+    if (toggle) toggle.checked = false;
+    if (lbl)    lbl.textContent = '오류 발생';
+    showToast('알림 설정 실패: ' + e.message);
+  }
+}
+
+// 인앱 알림 배너 (포그라운드 수신 시)
+function showInAppNotification(title, body) {
+  const banner = document.createElement('div');
+  banner.style.cssText = `
+    position:fixed;top:72px;right:16px;max-width:320px;z-index:9999;
+    background:#024481;color:#fff;border-radius:14px;padding:14px 16px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+    animation:slideInRight .3s ease;display:flex;align-items:flex-start;gap:10px;
+  `;
+  banner.innerHTML = `
+    <span class="material-symbols-outlined" style="font-size:20px;flex-shrink:0;margin-top:1px;">notifications</span>
+    <div style="flex:1;">
+      <p style="font-weight:700;font-size:14px;margin:0 0 2px;">${escHtml(title)}</p>
+      ${body ? `<p style="font-size:12px;opacity:.85;margin:0;">${escHtml(body)}</p>` : ''}
+    </div>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0;font-size:18px;line-height:1;">✕</button>
+  `;
+  // 슬라이드 인 애니메이션
+  const style = document.createElement('style');
+  style.textContent = '@keyframes slideInRight{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}';
+  document.head.appendChild(style);
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 6000);
+}
+
+// sendFamilyNotification - FCM 서버 푸시 + Firestore 인앱 알림 동시 처리
+async function sendFamilyPushViaFunction(toUid, title, body) {
+  // Cloud Functions 없이 Firestore 트리거 방식으로 구현
+  // notifications 컬렉션에 저장 → Cloud Function이 FCM 전송
+  // (Cloud Function 없는 경우 인앱 알림으로만 동작)
+  try {
+    await addDoc(collection(db, 'push_queue'), {
+      toUid, title, body,
+      familyId,
+      fromUid:   currentUser.uid,
+      fromName:  currentUser.displayName || currentUser.email,
+      createdAt: serverTimestamp(),
+      sent:      false
+    });
+  } catch(e) { console.warn('push_queue 저장 실패:', e); }
 }
 
 async function sendFamilyNotification(message, type) {
   try {
+    const fromName = currentUser.displayName || currentUser.email;
     for (const member of familyMembers) {
       if (member.uid === currentUser.uid) continue;
+      // 1. 인앱 알림 (Firestore)
       await addDoc(collection(db, 'notifications'), {
         toUid: member.uid,
         familyId,
@@ -1761,6 +2303,8 @@ async function sendFamilyNotification(message, type) {
         read: false,
         createdAt: serverTimestamp()
       });
+      // 2. FCM 푸시 알림 큐 (Cloud Function 연동 또는 직접 발송)
+      sendFamilyPushViaFunction(member.uid, '결율 Diary', message).catch(() => {});
     }
   } catch(e) { console.warn('Notification error:', e); }
 }
@@ -2035,10 +2579,25 @@ window.quickAssignTask = async function(taskId, uid) {
 };
 
 // ─── Page Navigation ─────────────────────────────────────────────────────
-const PAGES = ['home','calendar','tasks','settings','notifications'];
+const PAGES = ['home','calendar','tasks','routine','settings','notifications'];
 window.showPage = function(name) {
   PAGES.forEach(p => document.getElementById('page-'+p)?.classList.remove('active'));
   document.getElementById('page-'+name)?.classList.add('active');
+  if (name === 'calendar') {
+    const now = new Date();
+    calYear  = now.getFullYear();
+    calMonth = now.getMonth();
+    renderCalendar();
+    const todayStr = getLocalToday(); // 로컬 시간대 기준
+    selectCalDay(todayStr, now.getDate());
+  }
+  if (name === 'routine') { renderRoutineTabs(); }
+  // 할일 탭: 오늘 날짜로 초기화
+  if (name === 'tasks') {
+    taskViewDate = getLocalToday();
+    renderTasksPage();
+    renderOverdueSummary();
+  }
 
   document.querySelectorAll('.desk-nav').forEach(b => {
     b.className = 'desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all';
@@ -2133,6 +2692,304 @@ window.installApp = function() {
     });
   }
 };
+
+// Init routine listeners
+  initRoutine();
+
+
+// ═══════════════════════════════════════════════════════════
+// ─── ROUTINE (하루 일과) ────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+let routineItems     = [];          // Firestore 실시간 데이터
+let activeRoutineUid = null;        // 현재 보고 있는 멤버 uid (null = 전체)
+let editingRoutineId = null;        // 수정 중인 문서 ID
+let selectedRoutineAssignee = null; // 모달에서 선택한 담당자
+let routineCategory  = '기타';      // 선택된 카테고리
+
+// 카테고리별 이모지
+const CATEGORY_EMOJI = {
+  '기상/취침':'🌅','식사':'🍽️','위생':'🚿','운동':'🏃',
+  '공부/업무':'📚','이동':'🚗','기타':'✨',
+};
+
+// Firestore 루틴 리스너 연결
+function subscribeRoutines() {
+  if (!familyId) return;
+  const rQ = query(
+    collection(db, 'routines'),
+    where('familyId', '==', familyId)
+  );
+  unsubscribers.push(onSnapshot(rQ, snap => {
+    routineItems = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.timeStart || '').localeCompare(b.timeStart || ''));
+    renderRoutineContent();
+  }, err => console.error('[Routine] 쿼리 오류:', err.message)));
+}
+
+// loadFamilyData() 마지막에 호출됨 (아래에서 패치)
+function initRoutine() {
+  subscribeRoutines();
+}
+
+// ── 탭 렌더 ─────────────────────────────────────────────────
+function renderRoutineTabs() {
+  const el = document.getElementById('routine-tabs');
+  if (!el) return;
+  const tabs = [{ uid: null, label: '전체', avatar: null }, ...familyMembers.map(m => ({
+    uid: m.uid,
+    label: (m.displayName || m.email).split(' ')[0],
+    avatar: m,
+  }))];
+  el.innerHTML = tabs.map(t => {
+    const isActive = activeRoutineUid === t.uid;
+    const c = t.uid ? getMemberColor(t.uid) : { bg: '#024481', text: '#ffffff', light: '#d5e3ff' };
+    return `<button onclick="switchRoutineTab('${t.uid}')"
+      class="flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap text-label-md font-label-md border-2 transition-all flex-shrink-0"
+      style="${isActive
+        ? `background:${c.bg};color:${c.text};border-color:${c.bg};`
+        : `background:#fff;color:${c.bg};border-color:${c.bg}44;`}">
+      ${t.avatar ? memberAvatar(t.uid, 20) : '<span class="material-symbols-outlined text-[16px]">groups</span>'}
+      ${escHtml(t.label)}
+    </button>`;
+  }).join('');
+  renderRoutineContent();
+}
+
+window.switchRoutineTab = function(uid) {
+  activeRoutineUid = uid === 'null' ? null : uid;
+  renderRoutineTabs();
+};
+
+// ── 일과 목록 렌더 ──────────────────────────────────────────
+function renderRoutineContent() {
+  const el = document.getElementById('routine-content');
+  if (!el) return;
+
+  // 현재 탭에 맞는 항목 필터
+  let items = routineItems;
+  if (activeRoutineUid) {
+    items = items.filter(r => r.assigneeUid === activeRoutineUid);
+  }
+
+  if (items.length === 0) {
+    const who = activeRoutineUid ? getMemberName(activeRoutineUid) : '가족';
+    el.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-16 gap-4 text-on-surface-variant">
+        <span class="material-symbols-outlined text-5xl">schedule</span>
+        <p class="text-body-md">${escHtml(who)}의 일과가 없습니다</p>
+        <button onclick="openRoutineModal()" class="px-5 py-2.5 bg-primary text-on-primary rounded-xl text-label-md font-label-md hover:opacity-90 transition-opacity">
+          + 일과 추가하기
+        </button>
+      </div>`;
+    return;
+  }
+
+  // 시간대별 타임라인 렌더
+  el.innerHTML = items.map((r, idx) => {
+    const c        = r.assigneeUid ? getMemberColor(r.assigneeUid) : { bg:'#024481', light:'#d5e3ff', text:'#fff' };
+    const emoji    = CATEGORY_EMOJI[r.category] || '✨';
+    const duration = calcDuration(r.timeStart, r.timeEnd);
+    const isLast   = idx === items.length - 1;
+
+    return `
+    <div class="flex gap-3 group/routine">
+      <!-- 타임라인 선 -->
+      <div class="flex flex-col items-center flex-shrink-0 w-14">
+        <div class="text-[11px] font-bold text-on-surface-variant leading-none mb-1">${escHtml(r.timeStart||'')}</div>
+        <div class="w-3 h-3 rounded-full border-2 flex-shrink-0" style="border-color:${c.bg};background:${c.bg}33;"></div>
+        ${!isLast ? `<div class="w-0.5 flex-1 mt-1" style="background:${c.bg}33;min-height:28px;"></div>` : ''}
+      </div>
+      <!-- 카드 -->
+      <div class="flex-1 mb-3 pb-1 cursor-pointer" onclick="openRoutineModal('${r.id}')">
+        <div class="rounded-xl p-3.5 border hover:shadow-md transition-all group-hover/routine:-translate-y-0.5"
+             style="border-color:${c.bg}33;background:${c.bg}09;">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-start gap-2.5 flex-1 min-w-0">
+              <span class="text-xl flex-shrink-0 mt-0.5">${emoji}</span>
+              <div class="min-w-0">
+                <p class="text-body-md font-semibold text-on-surface">${escHtml(r.activity)}</p>
+                <div class="flex items-center gap-2 mt-1 flex-wrap">
+                  ${r.timeStart ? `<span class="text-[11px] font-medium" style="color:${c.bg};">${escHtml(r.timeStart)}${r.timeEnd?' – '+escHtml(r.timeEnd):''}</span>` : ''}
+                  ${duration    ? `<span class="text-[11px] text-outline">(${duration})</span>` : ''}
+                  ${r.category && r.category !== '기타' ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style="background:${c.bg}20;color:${c.bg};">${escHtml(r.category)}</span>` : ''}
+                </div>
+                ${r.note ? `<p class="text-[11px] text-on-surface-variant mt-1.5">${escHtml(r.note)}</p>` : ''}
+              </div>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              ${r.assigneeUid && !activeRoutineUid ? memberAvatar(r.assigneeUid, 22) : ''}
+              <span class="material-symbols-outlined text-[16px] opacity-0 group-hover/routine:opacity-50 transition-opacity text-primary">edit</span>
+            </div>
+          </div>
+        </div>
+        ${r.timeEnd ? `<div class="text-[10px] text-outline-variant ml-14 mt-0.5">${escHtml(r.timeEnd)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calcDuration(start, end) {
+  if (!start || !end) return '';
+  try {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    const diff = (eh * 60 + em) - (sh * 60 + sm);
+    if (diff <= 0) return '';
+    if (diff < 60) return diff + '분';
+    const h = Math.floor(diff / 60), m = diff % 60;
+    return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
+  } catch { return ''; }
+}
+
+// ── 모달 열기 ──────────────────────────────────────────────
+window.openRoutineModal = function(routineId = null) {
+  editingRoutineId = routineId;
+  // 폼 초기화
+  document.getElementById('routine-time-start').value = '';
+  document.getElementById('routine-time-end').value   = '';
+  document.getElementById('routine-activity').value   = '';
+  document.getElementById('routine-note').value       = '';
+  routineCategory = '기타';
+  selectedRoutineAssignee = activeRoutineUid; // 현재 탭 멤버 기본 선택
+
+  if (routineId) {
+    // 수정 모드
+    const item = routineItems.find(r => r.id === routineId);
+    if (!item) return;
+    document.getElementById('routine-modal-title').textContent = '일과 수정';
+    document.getElementById('routine-delete-btn').classList.remove('hidden');
+    document.getElementById('routine-time-start').value = item.timeStart || '';
+    document.getElementById('routine-time-end').value   = item.timeEnd   || '';
+    document.getElementById('routine-activity').value   = item.activity  || '';
+    document.getElementById('routine-note').value       = item.note      || '';
+    routineCategory         = item.category || '기타';
+    selectedRoutineAssignee = item.assigneeUid || null;
+  } else {
+    document.getElementById('routine-modal-title').textContent = '일과 추가';
+    document.getElementById('routine-delete-btn').classList.add('hidden');
+  }
+
+  renderRoutineAssigneeChips();
+  renderRoutineCategoryChips();
+  document.getElementById('routine-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+// ── 담당자 칩 렌더 ─────────────────────────────────────────
+function renderRoutineAssigneeChips() {
+  const el = document.getElementById('routine-assignee-chips');
+  if (!el) return;
+  el.innerHTML = familyMembers.map(m => {
+    const sel = selectedRoutineAssignee === m.uid;
+    const c   = getMemberColor(m.uid);
+    return `<button type="button" onclick="selectRoutineAssignee('${m.uid}')"
+      class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all text-label-md font-label-md"
+      style="${sel
+        ? `background:${c.bg};color:${c.text};border-color:${c.bg};`
+        : `background:#fff;color:#1a1c1b;border-color:#c2c6d1;`}">
+      ${memberAvatar(m.uid, 20)}
+      ${escHtml((m.displayName||m.email).split(' ')[0])}
+    </button>`;
+  }).join('');
+}
+
+window.selectRoutineAssignee = function(uid) {
+  selectedRoutineAssignee = selectedRoutineAssignee === uid ? null : uid;
+  renderRoutineAssigneeChips();
+};
+
+// ── 카테고리 칩 렌더 ───────────────────────────────────────
+function renderRoutineCategoryChips() {
+  document.querySelectorAll('.rcat-btn').forEach(btn => {
+    const cat = btn.textContent.trim().replace(/^\S+\s/, ''); // 이모지 제거
+    const fullLabel = btn.textContent.trim();
+    const catKey = Object.keys(CATEGORY_EMOJI).find(k => fullLabel.includes(k)) || '기타';
+    const isActive = routineCategory === catKey;
+    btn.style.cssText = isActive
+      ? 'background:#024481;color:#fff;border-color:#024481;'
+      : '';
+    btn.className = `rcat-btn px-3 py-1.5 rounded-full border-2 text-label-md font-label-md transition-colors ${isActive ? '' : 'border-outline-variant text-on-surface-variant hover:border-primary'}`;
+  });
+}
+
+window.setRoutineCategory = function(cat) {
+  routineCategory = cat;
+  renderRoutineCategoryChips();
+};
+
+// ── 저장 ────────────────────────────────────────────────────
+window.saveRoutineItem = async function() {
+  const activity  = document.getElementById('routine-activity').value.trim();
+  const timeStart = document.getElementById('routine-time-start').value;
+  const timeEnd   = document.getElementById('routine-time-end').value;
+  const note      = document.getElementById('routine-note').value.trim();
+
+  if (!activity)  return showToast('활동 내용을 입력하세요');
+  if (!timeStart) return showToast('시작 시간을 입력하세요');
+
+  const btn = document.getElementById('btn-save-routine');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled  = true;
+
+  try {
+    const data = {
+      familyId,
+      assigneeUid: selectedRoutineAssignee || null,
+      activity:    escHtml(activity),
+      timeStart,
+      timeEnd:     timeEnd || '',
+      category:    routineCategory,
+      note:        escHtml(note),
+    };
+
+    const who  = currentUser.displayName || currentUser.email;
+    const name = selectedRoutineAssignee ? getMemberName(selectedRoutineAssignee) : '전체';
+
+    if (editingRoutineId) {
+      await updateDoc(doc(db, 'routines', editingRoutineId), {
+        ...data,
+        lastEditedBy: currentUser.uid,
+        lastEditedAt: serverTimestamp(),
+      });
+      showToast('일과가 수정되었습니다 ✅');
+      logActivity('routine_edited', `✏️ ${who}님이 ${name}의 일과를 수정했습니다: ${activity}`);
+    } else {
+      await addDoc(collection(db, 'routines'), {
+        ...data,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp(),
+      });
+      showToast('일과가 추가되었습니다 ✅');
+      logActivity('routine_added', `🕐 ${who}님이 ${name}의 일과를 추가했습니다: ${activity}`);
+    }
+    closeModal('routine-modal');
+  } catch(e) {
+    console.error('saveRoutineItem error:', e);
+    showToast('저장 실패: ' + e.message);
+  } finally {
+    btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span>저장';
+    btn.disabled  = false;
+  }
+};
+
+// ── 삭제 ────────────────────────────────────────────────────
+window.deleteRoutineItem = async function() {
+  if (!editingRoutineId) return;
+  const confirmed = await showConfirm('이 일과를 삭제하시겠습니까?');
+  if (!confirmed) return;
+  try {
+    const item = routineItems.find(r => r.id === editingRoutineId);
+    const who  = currentUser.displayName || currentUser.email;
+    await deleteDoc(doc(db, 'routines', editingRoutineId));
+    showToast('삭제되었습니다');
+    logActivity('routine_deleted', `🗑️ ${who}님이 일과를 삭제했습니다: ${item?.activity || ''}`);
+    closeModal('routine-modal');
+  } catch(e) {
+    showToast('삭제 실패: ' + e.message);
+  }
+};
+
 
 // Init calendar date display
 renderCalendar();
