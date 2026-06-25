@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html class="light" lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Family Hub</title>
+<meta name="theme-color" content="#024481"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Family Hub"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode:"class",
+  theme:{
+    extend:{
+      colors:{
+        "on-surface-variant":"#424750","outline-variant":"#c2c6d1","background":"#faf9f7",
+        "on-secondary":"#ffffff","on-tertiary-fixed-variant":"#6f3800","on-background":"#1a1c1b",
+        "inverse-primary":"#a6c8ff","on-primary-fixed":"#001c3b","surface-container-lowest":"#ffffff",
+        "primary-fixed":"#d5e3ff","error-container":"#ffdad6","on-secondary-container":"#007144",
+        "primary":"#024481","on-primary":"#ffffff","on-tertiary":"#ffffff","outline":"#737781",
+        "surface-container-high":"#e9e8e6","surface-container-highest":"#e3e2e0","on-error":"#ffffff",
+        "on-secondary-fixed-variant":"#005230","on-tertiary-container":"#ffc9a1","tertiary-container":"#8a4b10",
+        "on-primary-container":"#bcd5ff","secondary":"#006d41","surface-variant":"#e3e2e0",
+        "on-tertiary-fixed":"#2f1400","on-primary-fixed-variant":"#094784","primary-fixed-dim":"#a6c8ff",
+        "surface":"#faf9f7","on-surface":"#1a1c1b","on-secondary-fixed":"#002110","on-error-container":"#93000a",
+        "secondary-container":"#91f4b8","inverse-surface":"#2f3130","surface-dim":"#dadad8",
+        "primary-container":"#2a5c9a","surface-container":"#efeeec","tertiary-fixed":"#ffdcc4",
+        "error":"#ba1a1a","tertiary-fixed-dim":"#ffb780","surface-container-low":"#f4f3f1",
+        "tertiary":"#6b3600","secondary-fixed":"#94f7bb"
+      },
+      borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},
+      spacing:{"calendar-half-hour":"32px",sm:"8px",md:"16px",lg:"24px",xs:"4px",base:"8px",xl:"32px","calendar-hour-height":"64px"},
+      fontFamily:{
+        "headline-lg-mobile":["Plus Jakarta Sans"],"display-lg":["Plus Jakarta Sans"],
+        "body-md":["Be Vietnam Pro"],"label-md":["Be Vietnam Pro"],"headline-md":["Plus Jakarta Sans"],
+        "body-lg":["Be Vietnam Pro"],"headline-lg":["Plus Jakarta Sans"],"body-sm":["Be Vietnam Pro"],"headline-sm":["Plus Jakarta Sans"]
+      },
+      fontSize:{
+        "headline-lg-mobile":["28px",{lineHeight:"36px",fontWeight:"600"}],
+        "display-lg":["48px",{lineHeight:"56px",letterSpacing:"-0.02em",fontWeight:"700"}],
+        "body-md":["16px",{lineHeight:"24px",fontWeight:"400"}],
+        "label-md":["12px",{lineHeight:"16px",letterSpacing:"0.05em",fontWeight:"600"}],
+        "headline-md":["24px",{lineHeight:"32px",fontWeight:"600"}],
+        "body-lg":["18px",{lineHeight:"28px",fontWeight:"400"}],
+        "headline-lg":["32px",{lineHeight:"40px",fontWeight:"600"}],
+        "body-sm":["14px",{lineHeight:"20px",fontWeight:"400"}],
+        "headline-sm":["20px",{lineHeight:"28px",fontWeight:"600"}]
+      }
+    }
+  }
+}
+</script>
+<style>
+  *{box-sizing:border-box;}
+  body{min-height:max(884px,100dvh);}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .fill-icon{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24 !important;}
+  .calendar-grid-line{background-image:linear-gradient(to bottom,#c2c6d1 1px,transparent 1px);background-size:100% 32px;}
+  .calendar-grid{background-image:linear-gradient(to bottom,#c2c6d1 1px,transparent 1px);background-size:100% 32px;}
+  .custom-scrollbar::-webkit-scrollbar{width:4px;}
+  .custom-scrollbar::-webkit-scrollbar-track{background:transparent;}
+  .custom-scrollbar::-webkit-scrollbar-thumb{background:#c2c6d1;border-radius:10px;}
+  .no-scrollbar::-webkit-scrollbar{display:none;}
+  .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+  .glass-card{background:rgba(255,255,255,0.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.3);}
+  .input-focus-ring:focus-within{box-shadow:0 0 0 2px rgba(2,68,129,0.15);}
+  .task-checkbox:checked+.task-label{text-decoration:line-through;opacity:0.6;}
+  /* Page routing */
+  .page{display:none;}
+  .page.active{display:block;}
+  /* Auth overlay */
+  #auth-screen{position:fixed;inset:0;z-index:500;background:#faf9f7;display:flex;align-items:center;justify-content:center;}
+  #auth-screen.hidden{display:none;}
+  /* Modals */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:1rem;}
+  .modal-bg.open{display:flex;}
+  .modal-box{background:#faf9f7;border-radius:1rem;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;padding:2rem;position:relative;}
+  /* Toast */
+  #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1c1b;color:#fff;padding:10px 20px;border-radius:50px;font-size:14px;z-index:400;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+  #toast.show{opacity:1;}
+  /* Loading spinner */
+  .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  /* Event card colors */
+  .ev-primary{background:rgba(213,227,255,0.25);border-left:4px solid #024481;}
+  .ev-secondary{background:rgba(145,244,184,0.25);border-left:4px solid #006d41;}
+  .ev-tertiary{background:rgba(255,220,196,0.25);border-left:4px solid #6b3600;}
+  /* Avatar */
+  .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;}
+  .avatar-placeholder{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;}
+  /* Profile upload */
+  #profile-upload-area{cursor:pointer;position:relative;}
+  #profile-upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  /* Notification badge */
+  .notif-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#ba1a1a;border:2px solid #faf9f7;}
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+
+<!-- ═══════════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="w-full max-w-sm mx-auto px-6">
+    <!-- Logo -->
+    <div class="flex flex-col items-center mb-10">
+      <div class="w-20 h-20 rounded-3xl bg-primary flex items-center justify-center shadow-lg mb-4">
+        <span class="material-symbols-outlined text-on-primary fill-icon text-4xl">family_restroom</span>
+      </div>
+      <h1 class="text-headline-lg font-headline-lg text-primary">Family Hub</h1>
+      <p class="text-body-sm text-on-surface-variant mt-1">가족 모두가 함께하는 스마트 플래너</p>
+    </div>
+
+    <!-- Tab: login / signup -->
+    <div class="flex bg-surface-container rounded-xl p-1 mb-6">
+      <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg text-label-md font-label-md bg-surface-container-lowest text-primary shadow-sm transition-all">로그인</button>
+      <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2 rounded-lg text-label-md font-label-md text-on-surface-variant transition-all">회원가입</button>
+    </div>
+
+    <!-- LOGIN form -->
+    <div id="form-login">
+      <div class="space-y-4">
+        <div class="input-focus-ring flex items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3">
+          <span class="material-symbols-outlined text-outline mr-3 text-[20px]">mail</span>
+          <input id="login-email" type="email" placeholder="이메일" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+        </div>
+        <div class="input-focus-ring flex items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3">
+          <span class="material-symbols-outlined text-outline mr-3 text-[20px]">lock</span>
+          <input id="login-pw" type="password" placeholder="비밀번호" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+        </div>
+        <button onclick="emailLogin()" id="btn-login" class="w-full bg-primary text-on-primary h-12 rounded-xl font-semibold text-body-md flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform">
+          로그인
+        </button>
+      </div>
+      <div class="flex items-center gap-3 my-5">
+        <div class="h-px flex-1 bg-outline-variant"></div>
+        <span class="text-label-md text-outline">또는</span>
+        <div class="h-px flex-1 bg-outline-variant"></div>
+      </div>
+      <button onclick="googleLogin()" class="w-full bg-surface-container-lowest border border-outline-variant h-12 rounded-xl font-semibold text-body-md flex items-center justify-center gap-3 hover:bg-surface-container transition-colors active:scale-95">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9L37.5 9C34.2 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.7 1.1 7.8 2.9L37.5 9C34.2 6.1 29.3 4 24 4c-7.7 0-14.4 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5L31.8 34c-2.1 1.4-4.7 2-7.8 2-5.2 0-9.6-3-11.3-7.5L6.2 33.6C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.5-2.6 4.6-4.8 6l5.7 4.9c3.6-3.3 6-8.2 6-14.9 0-1.3-.1-2.7-.1-4z"/></svg>
+        Google로 계속하기
+      </button>
+    </div>
+
+    <!-- SIGNUP form -->
+    <div id="form-signup" class="hidden">
+      <div class="space-y-4">
+        <div class="input-focus-ring flex items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3">
+          <span class="material-symbols-outlined text-outline mr-3 text-[20px]">person</span>
+          <input id="signup-name" type="text" placeholder="이름" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+        </div>
+        <div class="input-focus-ring flex items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3">
+          <span class="material-symbols-outlined text-outline mr-3 text-[20px]">mail</span>
+          <input id="signup-email" type="email" placeholder="이메일" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+        </div>
+        <div class="input-focus-ring flex items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3">
+          <span class="material-symbols-outlined text-outline mr-3 text-[20px]">lock</span>
+          <input id="signup-pw" type="password" placeholder="비밀번호 (6자 이상)" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+        </div>
+        <button onclick="emailSignup()" id="btn-signup" class="w-full bg-primary text-on-primary h-12 rounded-xl font-semibold text-body-md flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform">
+          가입하기
+        </button>
+      </div>
+      <div class="flex items-center gap-3 my-5">
+        <div class="h-px flex-1 bg-outline-variant"></div>
+        <span class="text-label-md text-outline">또는</span>
+        <div class="h-px flex-1 bg-outline-variant"></div>
+      </div>
+      <button onclick="googleLogin()" class="w-full bg-surface-container-lowest border border-outline-variant h-12 rounded-xl font-semibold text-body-md flex items-center justify-center gap-3 hover:bg-surface-container transition-colors active:scale-95">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9L37.5 9C34.2 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.7 1.1 7.8 2.9L37.5 9C34.2 6.1 29.3 4 24 4c-7.7 0-14.4 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5L31.8 34c-2.1 1.4-4.7 2-7.8 2-5.2 0-9.6-3-11.3-7.5L6.2 33.6C9.5 39.5 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.5-2.6 4.6-4.8 6l5.7 4.9c3.6-3.3 6-8.2 6-14.9 0-1.3-.1-2.7-.1-4z"/></svg>
+        Google로 계속하기
+      </button>
+    </div>
+
+    <p id="auth-error" class="text-error text-body-sm text-center mt-4 hidden"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN APP (hidden until logged in)
+═══════════════════════════════════════════════ -->
+<div id="app-shell" class="hidden pb-24 md:pb-0">
+
+<!-- TOP APP BAR -->
+<header class="fixed top-0 z-50 w-full bg-background shadow-sm">
+  <div class="flex justify-between items-center px-4 h-16 w-full max-w-7xl mx-auto">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed shadow-sm bg-primary flex items-center justify-center cursor-pointer" onclick="showPage('settings')">
+        <img id="header-avatar" src="" alt="" class="w-full h-full object-cover hidden"/>
+        <span id="header-avatar-initial" class="material-symbols-outlined text-on-primary fill-icon text-xl">person</span>
+      </div>
+      <div>
+        <h1 class="text-headline-sm font-headline-sm text-primary leading-none">Family Hub</h1>
+        <p id="header-greeting" class="text-[11px] text-on-surface-variant leading-none mt-0.5">로딩 중...</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1">
+      <button onclick="showPage('notifications')" class="relative p-2 rounded-full hover:bg-surface-container transition-colors text-primary">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notif-badge" class="notif-badge hidden"></span>
+      </button>
+      <button onclick="signOut()" class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+        <span class="material-symbols-outlined">logout</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- DESKTOP SIDEBAR -->
+<nav class="hidden md:flex fixed top-16 left-0 h-full w-20 flex-col items-center py-10 gap-8 bg-surface-container-low shadow-sm z-40">
+  <button onclick="showPage('home')" id="nav-home" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl bg-primary text-on-primary shadow-md transition-all">
+    <span class="material-symbols-outlined">home</span>
+  </button>
+  <button onclick="showPage('calendar')" id="nav-calendar" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
+    <span class="material-symbols-outlined">calendar_month</span>
+  </button>
+  <button onclick="showPage('tasks')" id="nav-tasks" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
+    <span class="material-symbols-outlined">assignment_turned_in</span>
+  </button>
+  <button onclick="showPage('settings')" id="nav-settings" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
+    <span class="material-symbols-outlined">settings</span>
+  </button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="md:ml-20 pt-16">
+
+<!-- ===== HOME PAGE ===== -->
+<div id="page-home" class="page active">
+  <main class="max-w-7xl mx-auto px-4 py-6 md:py-10 grid grid-cols-1 md:grid-cols-12 gap-6">
+    <section class="md:col-span-12 mb-2">
+      <h2 id="home-greeting" class="text-headline-lg font-headline-lg text-on-background">안녕하세요!</h2>
+      <p id="home-date" class="text-body-md text-on-surface-variant"></p>
+    </section>
+
+    <!-- Today's Schedule -->
+    <section class="md:col-span-7 lg:col-span-8 flex flex-col gap-6">
+      <div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-variant/30">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-headline-sm font-headline-sm text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined">calendar_today</span>오늘 일정
+          </h3>
+          <button onclick="showPage('calendar')" class="text-label-md font-label-md text-primary bg-primary-fixed px-3 py-1 rounded-full hover:bg-primary-fixed-dim transition-colors">전체 보기</button>
+        </div>
+        <div id="home-events-list" class="flex flex-col gap-3 min-h-[120px]">
+          <div class="flex items-center justify-center h-28 text-on-surface-variant text-body-sm">
+            <span class="spinner border-outline-variant border-t-primary mr-2"></span>로딩 중...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tasks & Updates -->
+    <aside class="md:col-span-5 lg:col-span-4 flex flex-col gap-6">
+      <section class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-variant/30">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-headline-sm font-headline-sm text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined">assignment_turned_in</span>오늘 할일
+          </h3>
+          <span id="home-task-count" class="text-label-md font-label-md text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-md">로딩 중</span>
+        </div>
+        <div id="home-task-progress" class="w-full h-2 bg-surface-container rounded-full overflow-hidden mb-4">
+          <div id="home-task-bar" class="h-full bg-secondary w-0 transition-all duration-500"></div>
+        </div>
+        <div id="home-tasks-list" class="flex flex-col gap-3 min-h-[80px]">
+          <div class="flex items-center justify-center h-16 text-on-surface-variant text-body-sm">
+            <span class="spinner border-outline-variant border-t-primary mr-2"></span>
+          </div>
+        </div>
+        <button onclick="openModal('event-modal')" class="w-full mt-4 py-3 border-2 border-dashed border-outline-variant rounded-xl text-label-md font-bold text-outline hover:text-primary hover:border-primary transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined">add</span>할일 추가
+        </button>
+      </section>
+
+      <!-- Family Activity Feed -->
+      <section class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-variant/30">
+        <h3 class="text-headline-sm font-headline-sm text-primary flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined">notifications_active</span>가족 활동
+        </h3>
+        <div id="activity-feed" class="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 max-h-[260px]">
+          <p class="text-body-sm text-on-surface-variant text-center py-4">활동 내역이 없습니다</p>
+        </div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<!-- ===== CALENDAR PAGE ===== -->
+<div id="page-calendar" class="page">
+  <main class="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-8">
+    <!-- Sidebar: family members filter -->
+    <aside class="hidden md:block w-64 shrink-0">
+      <div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] sticky top-24">
+        <h2 class="text-headline-sm font-headline-sm mb-4 text-on-surface">가족 필터</h2>
+        <div id="calendar-member-list" class="space-y-3">
+          <p class="text-body-sm text-on-surface-variant">로딩 중...</p>
+        </div>
+        <button onclick="openModal('event-modal')" class="mt-6 w-full py-2.5 bg-primary text-on-primary rounded-xl text-label-md font-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+          <span class="material-symbols-outlined text-[18px]">add</span>일정 추가
+        </button>
+      </div>
+    </aside>
+
+    <!-- Calendar main -->
+    <section class="flex-1 min-w-0">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <button id="cal-prev" onclick="changeCalMonth(-1)" class="p-2 hover:bg-surface-container rounded-xl transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+          <h2 id="cal-month-label" class="text-headline-md font-headline-md text-on-surface min-w-[160px] text-center"></h2>
+          <button id="cal-next" onclick="changeCalMonth(1)" class="p-2 hover:bg-surface-container rounded-xl transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+        </div>
+        <button onclick="goToday()" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant font-label-md hover:bg-surface-container-high transition-colors text-sm">오늘</button>
+      </div>
+      <!-- Month grid -->
+      <div class="bg-surface-container-lowest rounded-2xl shadow-[0px_4px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-surface-container-high">
+        <div class="grid grid-cols-7 border-b border-outline-variant">
+          <div class="py-3 text-center text-label-md text-error font-bold">일</div>
+          <div class="py-3 text-center text-label-md text-on-surface-variant font-bold">월</div>
+          <div class="py-3 text-center text-label-md text-on-surface-variant font-bold">화</div>
+          <div class="py-3 text-center text-label-md text-on-surface-variant font-bold">수</div>
+          <div class="py-3 text-center text-label-md text-on-surface-variant font-bold">목</div>
+          <div class="py-3 text-center text-label-md text-on-surface-variant font-bold">금</div>
+          <div class="py-3 text-center text-label-md text-error font-bold">토</div>
+        </div>
+        <div id="cal-grid" class="grid grid-cols-7 min-h-[400px]">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+      <!-- Selected day events -->
+      <div id="cal-day-events" class="mt-6 hidden">
+        <h3 id="cal-day-title" class="text-headline-sm font-headline-sm text-on-surface mb-3"></h3>
+        <div id="cal-day-list" class="flex flex-col gap-2"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== TASKS PAGE ===== -->
+<div id="page-tasks" class="page">
+  <main class="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-6">
+    <!-- Progress -->
+    <section class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)]">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-headline-md font-headline-md text-on-surface mb-1">오늘 진행 현황</h2>
+          <p class="text-body-sm text-on-surface-variant">가족 모두 화이팅!</p>
+        </div>
+        <div class="text-right">
+          <span id="tasks-pct" class="text-headline-sm font-headline-sm text-secondary">0%</span>
+          <p id="tasks-count-label" class="text-label-md font-label-md text-outline">0 / 0 완료</p>
+        </div>
+      </div>
+      <div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+        <div id="tasks-progress-bar" class="h-full bg-secondary w-0 transition-all duration-700 ease-out rounded-full"></div>
+      </div>
+    </section>
+
+    <!-- Filter chips -->
+    <section class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+      <button onclick="filterTasks('all')" id="filter-all" class="task-filter whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary text-label-md font-label-md">전체</button>
+      <button onclick="filterTasks('mine')" id="filter-mine" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">내 할일</button>
+      <button onclick="filterTasks('pending')" id="filter-pending" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">미완료</button>
+      <button onclick="filterTasks('done')" id="filter-done" class="task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">완료</button>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2">
+        <div id="tasks-list" class="space-y-3">
+          <div class="flex items-center justify-center h-32 text-on-surface-variant">
+            <span class="spinner border-outline-variant border-t-primary mr-2"></span>할일 로딩 중...
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="space-y-4">
+        <div class="bg-primary p-6 rounded-xl text-on-primary shadow-lg overflow-hidden relative">
+          <div class="relative z-10">
+            <h3 class="text-headline-sm font-headline-sm mb-4">기여도 순위</h3>
+            <div id="leaderboard" class="space-y-3">
+              <p class="text-body-sm opacity-70">로딩 중...</p>
+            </div>
+          </div>
+          <div class="absolute -right-10 -bottom-10 opacity-20 transform rotate-12">
+            <span class="material-symbols-outlined text-[120px]">emoji_events</span>
+          </div>
+        </div>
+        <div class="p-5 rounded-xl bg-secondary-container text-on-secondary-container">
+          <p class="italic text-body-sm font-medium">"함께 계획하고, 함께 즐겨요!"</p>
+          <p class="text-label-md mt-2 opacity-70">— Family Hub</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== SETTINGS PAGE ===== -->
+<div id="page-settings" class="page">
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <h2 class="text-headline-lg font-headline-lg text-on-surface mb-8">설정</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- Profile card -->
+      <div class="lg:col-span-4 space-y-4">
+        <div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)]">
+          <h3 class="text-headline-sm font-headline-sm text-on-surface mb-5">내 프로필</h3>
+          <!-- Avatar upload -->
+          <div class="flex flex-col items-center gap-4 mb-6">
+            <div id="profile-upload-area" class="relative">
+              <input type="file" accept="image/*" onchange="uploadProfilePhoto(event)" title="프로필 사진 변경"/>
+              <div class="w-24 h-24 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border-4 border-primary-fixed shadow-md">
+                <img id="settings-avatar" src="" alt="" class="w-full h-full object-cover hidden"/>
+                <span id="settings-avatar-initial" class="text-headline-lg font-bold text-primary">?</span>
+              </div>
+              <div class="absolute bottom-0 right-0 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow">
+                <span class="material-symbols-outlined text-on-primary text-[14px]">photo_camera</span>
+              </div>
+            </div>
+            <div class="text-center">
+              <p id="settings-name" class="text-body-lg font-semibold text-on-surface">로딩 중...</p>
+              <p id="settings-email" class="text-body-sm text-on-surface-variant"></p>
+            </div>
+          </div>
+          <!-- Edit display name -->
+          <div class="space-y-3">
+            <div class="input-focus-ring flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3">
+              <span class="material-symbols-outlined text-outline mr-3 text-[18px]">badge</span>
+              <input id="edit-display-name" type="text" placeholder="표시 이름" class="w-full bg-transparent border-none focus:ring-0 text-body-md"/>
+            </div>
+            <button onclick="updateDisplayName()" class="w-full py-2.5 bg-primary text-on-primary rounded-xl text-label-md font-label-md hover:opacity-90 transition-opacity active:scale-95">이름 저장</button>
+          </div>
+        </div>
+
+        <!-- Notifications toggle -->
+        <div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.04)]">
+          <h3 class="text-headline-sm font-headline-sm text-on-surface mb-4">알림 설정</h3>
+          <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-primary">notifications</span>
+              <span class="text-body-sm font-medium text-on-surface">푸시 알림</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input id="notif-toggle" type="checkbox" class="sr-only peer" onchange="toggleNotifications(this.checked)"/>
+              <div class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Sign out -->
+        <button onclick="signOut()" class="w-full py-3 border-2 border-error/30 text-error rounded-xl text-label-md font-label-md hover:bg-error-container/20 transition-colors flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined">logout</span>로그아웃
+        </button>
+      </div>
+
+      <!-- Family members panel -->
+      <div class="lg:col-span-8 space-y-6">
+        <div class="bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+          <div class="p-6 border-b border-outline-variant flex justify-between items-center">
+            <h3 class="text-headline-sm font-headline-sm text-on-surface">가족 멤버</h3>
+            <span id="family-id-badge" class="text-label-md font-label-md text-primary bg-primary-fixed px-3 py-1 rounded-full"></span>
+          </div>
+          <div id="family-members-list" class="divide-y divide-outline-variant">
+            <p class="p-6 text-body-sm text-on-surface-variant">로딩 중...</p>
+          </div>
+        </div>
+
+        <!-- Invite -->
+        <div class="bg-primary p-6 rounded-xl text-on-primary shadow-lg">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="material-symbols-outlined text-2xl">group_add</span>
+            <h3 class="text-headline-sm font-headline-sm">가족 초대</h3>
+          </div>
+          <p class="text-body-sm text-primary-container mb-5">초대 코드를 공유하거나 이메일로 초대하세요</p>
+          <div class="bg-white/10 p-4 rounded-xl border border-dashed border-white/30 mb-4 text-center">
+            <p class="text-label-md opacity-80 mb-1">가족 초대 코드</p>
+            <div class="flex items-center justify-center gap-3">
+              <span id="family-invite-code" class="text-headline-sm font-bold tracking-widest">------</span>
+              <button onclick="copyInviteCode()" class="p-1.5 rounded-lg bg-white/15 hover:bg-white/25 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">content_copy</span>
+              </button>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <input id="join-code-input" type="text" placeholder="초대 코드 입력" maxlength="6" class="flex-1 bg-white/10 border border-white/20 rounded-xl py-3 px-4 placeholder:text-white/50 text-white focus:outline-none focus:ring-2 focus:ring-white/50 uppercase tracking-widest text-center font-bold"/>
+            <button onclick="joinFamily()" class="bg-white text-primary font-bold px-5 rounded-xl hover:opacity-95 active:scale-95 transition-all">참가</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== NOTIFICATIONS PAGE ===== -->
+<div id="page-notifications" class="page">
+  <main class="max-w-2xl mx-auto px-4 py-6">
+    <h2 class="text-headline-lg font-headline-lg text-on-surface mb-6">알림</h2>
+    <div id="notifications-list" class="space-y-3">
+      <div class="flex items-center justify-center h-40 text-on-surface-variant">
+        <span class="spinner border-outline-variant border-t-primary mr-2"></span>
+      </div>
+    </div>
+  </main>
+</div>
+
+</div><!-- end md:ml-20 -->
+</div><!-- end app-shell -->
+
+<!-- ═══════════════════════════════════════════════
+     FAB
+═══════════════════════════════════════════════ -->
+<button id="fab-btn" onclick="openModal('event-modal')" class="hidden fixed bottom-24 right-6 md:bottom-10 md:right-10 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform z-40">
+  <span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+
+<!-- ═══════════════════════════════════════════════
+     BOTTOM NAV (MOBILE)
+═══════════════════════════════════════════════ -->
+<nav id="bottom-nav" class="hidden md:hidden fixed bottom-0 left-0 w-full bg-surface shadow-[0px_-4px_12px_rgba(0,0,0,0.04)] z-50 flex justify-around items-center px-4 py-3">
+  <button onclick="showPage('home')" id="mob-home" class="mob-nav flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 transition-all">
+    <span class="material-symbols-outlined">home</span><span class="text-label-md font-label-md">홈</span>
+  </button>
+  <button onclick="showPage('calendar')" id="mob-calendar" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
+    <span class="material-symbols-outlined">calendar_month</span><span class="text-label-md font-label-md">캘린더</span>
+  </button>
+  <button onclick="showPage('tasks')" id="mob-tasks" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
+    <span class="material-symbols-outlined">assignment_turned_in</span><span class="text-label-md font-label-md">할일</span>
+  </button>
+  <button onclick="showPage('settings')" id="mob-settings" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
+    <span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">설정</span>
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL: CREATE EVENT / TASK
+═══════════════════════════════════════════════ -->
+<div id="event-modal" class="modal-bg">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-headline-md font-headline-md text-primary" id="modal-title">새 일정 추가</h2>
+        <p class="text-body-sm text-on-surface-variant">가족과 공유할 일정을 만드세요</p>
+      </div>
+      <button onclick="closeModal('event-modal')" class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Type selector -->
+    <div class="flex gap-2 mb-6">
+      <button onclick="setModalType('event')" id="type-event" class="flex-1 py-2 rounded-xl bg-primary text-on-primary text-label-md font-label-md transition-all">📅 일정</button>
+      <button onclick="setModalType('task')" id="type-task" class="flex-1 py-2 rounded-xl bg-surface-container text-on-surface-variant text-label-md font-label-md transition-all">✅ 할일</button>
+    </div>
+
+    <div class="space-y-4">
+      <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-4 py-3">
+        <span class="material-symbols-outlined text-outline mr-3">title</span>
+        <input id="modal-item-title" type="text" placeholder="제목을 입력하세요" class="w-full bg-transparent border-none focus:ring-0 text-body-lg placeholder:text-outline-variant"/>
+      </div>
+
+      <!-- Date/Time (for events) -->
+      <div id="event-fields">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-4 py-3">
+            <span class="material-symbols-outlined text-outline mr-3">calendar_today</span>
+            <input id="modal-date" type="date" class="w-full bg-transparent border-none focus:ring-0 text-body-md"/>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-3 py-3">
+              <input id="modal-time-start" type="time" class="w-full bg-transparent border-none focus:ring-0 text-body-md"/>
+            </div>
+            <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-3 py-3">
+              <input id="modal-time-end" type="time" class="w-full bg-transparent border-none focus:ring-0 text-body-md"/>
+            </div>
+          </div>
+        </div>
+        <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-4 py-3 mt-4">
+          <span class="material-symbols-outlined text-outline mr-3">location_on</span>
+          <input id="modal-location" type="text" placeholder="장소 (선택)" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+        </div>
+      </div>
+
+      <!-- Priority (for tasks) -->
+      <div id="task-fields" class="hidden">
+        <div class="flex gap-2">
+          <button onclick="setTaskPriority('high')" id="pri-high" class="flex-1 py-2 rounded-xl border-2 border-error text-error text-label-md font-label-md hover:bg-error-container/20 transition-colors">높음</button>
+          <button onclick="setTaskPriority('mid')" id="pri-mid" class="flex-1 py-2 rounded-xl border-2 border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">보통</button>
+          <button onclick="setTaskPriority('low')" id="pri-low" class="flex-1 py-2 rounded-xl border-2 border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">낮음</button>
+        </div>
+      </div>
+
+      <!-- Assignee -->
+      <div>
+        <label class="text-label-md font-label-md text-primary uppercase tracking-wider mb-2 block">담당자</label>
+        <div id="modal-assignee-chips" class="flex flex-wrap gap-2">
+          <p class="text-body-sm text-on-surface-variant">가족 멤버 로딩 중...</p>
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div class="input-focus-ring flex items-start bg-white border border-outline-variant rounded-xl px-4 py-3">
+        <span class="material-symbols-outlined text-outline mr-3 mt-0.5">notes</span>
+        <textarea id="modal-note" rows="2" placeholder="메모 (선택)" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant resize-none"></textarea>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="saveItem()" id="btn-save-item" class="flex-1 bg-primary text-white h-12 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform">
+          <span class="material-symbols-outlined">check_circle</span>저장
+        </button>
+        <button onclick="closeModal('event-modal')" class="px-6 bg-surface-container-high text-on-surface-variant h-12 rounded-xl hover:bg-surface-container-highest transition-colors">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- PWA Install Banner -->
+<div id="install-banner" style="display:none;position:fixed;bottom:90px;left:0;right:0;margin:0 16px;background:#024481;color:#fff;border-radius:16px;padding:14px 18px;z-index:300;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);">
+  <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.15);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+    <span class="material-symbols-outlined" style="color:#fff;font-size:22px;">family_restroom</span>
+  </div>
+  <div style="flex:1;">
+    <p style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;margin:0;">Family Hub 설치</p>
+    <p style="font-size:12px;opacity:0.8;margin:2px 0 0 0;">홈 화면에 추가해서 앱처럼 사용하세요</p>
+  </div>
+  <button onclick="installApp()" style="background:#fff;color:#024481;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;">설치</button>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:8px;cursor:pointer;line-height:0;">
+    <span class="material-symbols-outlined" style="color:#fff;font-size:18px;">close</span>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     FIREBASE + APP LOGIC
+═══════════════════════════════════════════════ -->
+<script type="module">
+// ─── Firebase SDK (CDN ESM) ───────────────────────────────────────────────
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signInWithPopup, GoogleAuthProvider, signOut as fbSignOut,
+  onAuthStateChanged, updateProfile
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {
+  getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc,
+  deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp,
+  Timestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {
+  getStorage, ref as storageRef, uploadBytes, getDownloadURL
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+import {
+  getMessaging, getToken, onMessage
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
+
+// ─── Config ──────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyD6LRCM-dCm0wCZvia1D0rYzNSTWpOJKRU",
+  authDomain: "jscho-6d363.firebaseapp.com",
+  projectId: "jscho-6d363",
+  storageBucket: "jscho-6d363.firebasestorage.app",
+  messagingSenderId: "221858858688",
+  appId: "1:221858858688:web:1f0d1bc2af082d1e23cf25",
+  measurementId: "G-XNE2FELBHS"
+};
+
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
+const storage = getStorage(app);
+let messaging = null;
+try { messaging = getMessaging(app); } catch(e) { console.warn('[FCM] Not supported:', e.message); }
+
+// ─── State ───────────────────────────────────────────────────────────────
+let currentUser   = null;
+let familyId      = null;
+let familyMembers = [];
+let allTasks      = [];
+let allEvents     = [];
+let calYear       = new Date().getFullYear();
+let calMonth      = new Date().getMonth(); // 0-based
+let currentFilter = 'all';
+let modalType     = 'event';
+let taskPriority  = 'mid';
+let selectedAssignees = [];
+let unsubscribers = [];
+
+// ─── Auth state ──────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    await initUserProfile(user);
+    showApp();
+    await loadFamilyData();
+  } else {
+    currentUser = null;
+    familyId = null;
+    hideApp();
+  }
+});
+
+async function initUserProfile(user) {
+  const uRef = doc(db, 'users', user.uid);
+  const snap = await getDoc(uRef);
+  if (!snap.exists()) {
+    // New user — create profile + family
+    const fid = genCode(6);
+    familyId = fid;
+    await setDoc(uRef, {
+      uid: user.uid,
+      displayName: user.displayName || user.email.split('@')[0],
+      email: user.email,
+      photoURL: user.photoURL || '',
+      familyId: fid,
+      role: 'admin',
+      joinedAt: serverTimestamp()
+    });
+    await setDoc(doc(db, 'families', fid), {
+      id: fid,
+      createdBy: user.uid,
+      createdAt: serverTimestamp(),
+      members: [user.uid]
+    });
+    await logActivity('family_joined', `${user.displayName || '사용자'}님이 Family Hub를 시작했습니다`);
+  } else {
+    familyId = snap.data().familyId;
+  }
+}
+
+function showApp() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-shell').classList.remove('hidden');
+  document.getElementById('fab-btn').classList.remove('hidden');
+  document.getElementById('fab-btn').style.display = 'flex';
+  document.getElementById('bottom-nav').classList.remove('hidden');
+  document.getElementById('bottom-nav').style.display = 'flex';
+  updateHeaderUI();
+}
+
+function hideApp() {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('fab-btn').classList.add('hidden');
+  document.getElementById('bottom-nav').classList.add('hidden');
+  // Unsubscribe listeners
+  unsubscribers.forEach(u => u());
+  unsubscribers = [];
+}
+
+function updateHeaderUI() {
+  if (!currentUser) return;
+  const name = currentUser.displayName || currentUser.email;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? '좋은 아침이에요' : hour < 18 ? '안녕하세요' : '좋은 저녁이에요';
+  document.getElementById('header-greeting').textContent = `${greet}, ${name.split(' ')[0]}님`;
+  document.getElementById('home-greeting').textContent = `${greet}, ${name.split(' ')[0]}님! 👋`;
+  const today = new Date();
+  document.getElementById('home-date').textContent =
+    `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${['일','월','화','수','목','금','토'][today.getDay()]})`;
+
+  // Avatar
+  if (currentUser.photoURL) {
+    document.getElementById('header-avatar').src = currentUser.photoURL;
+    document.getElementById('header-avatar').classList.remove('hidden');
+    document.getElementById('header-avatar-initial').classList.add('hidden');
+    document.getElementById('settings-avatar').src = currentUser.photoURL;
+    document.getElementById('settings-avatar').classList.remove('hidden');
+    document.getElementById('settings-avatar-initial').classList.add('hidden');
+  } else {
+    const initial = (currentUser.displayName || currentUser.email)[0].toUpperCase();
+    document.getElementById('settings-avatar-initial').textContent = initial;
+  }
+  document.getElementById('settings-name').textContent = currentUser.displayName || '이름 없음';
+  document.getElementById('settings-email').textContent = currentUser.email;
+  document.getElementById('edit-display-name').value = currentUser.displayName || '';
+}
+
+// ─── Load family data + realtime listeners ───────────────────────────────
+async function loadFamilyData() {
+  if (!familyId) return;
+
+  // Family members
+  const famSnap = await getDoc(doc(db, 'families', familyId));
+  if (!famSnap.exists()) return;
+  const memberIds = famSnap.data().members || [];
+
+  familyMembers = [];
+  for (const uid of memberIds) {
+    const uSnap = await getDoc(doc(db, 'users', uid));
+    if (uSnap.exists()) familyMembers.push({ uid, ...uSnap.data() });
+  }
+
+  // Invite code
+  document.getElementById('family-invite-code').textContent = familyId;
+  document.getElementById('family-id-badge').textContent = `코드: ${familyId}`;
+
+  // Render members in settings
+  renderFamilyMembers();
+  renderCalendarMemberFilter();
+
+  // Realtime: events (orderBy 제거 → 복합 인덱스 불필요, 클라이언트 정렬)
+  const evQ = query(
+    collection(db, 'events'),
+    where('familyId', '==', familyId)
+  );
+  unsubscribers.push(onSnapshot(evQ, snap => {
+    allEvents = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    renderHomeEvents();
+    renderCalendar();
+  }, err => {
+    console.error('[Events] 쿼리 오류:', err.message);
+    showToast('일정 로딩 오류: ' + err.message);
+  }));
+
+  // Realtime: tasks (orderBy 제거 → 클라이언트 정렬)
+  const taskQ = query(
+    collection(db, 'tasks'),
+    where('familyId', '==', familyId)
+  );
+  unsubscribers.push(onSnapshot(taskQ, snap => {
+    allTasks = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const ta = a.createdAt?.toMillis?.() || 0;
+        const tb = b.createdAt?.toMillis?.() || 0;
+        return tb - ta;
+      });
+    renderHomeTasks();
+    renderTasksPage();
+    renderLeaderboard();
+  }, err => {
+    console.error('[Tasks] 쿼리 오류:', err.message);
+    showToast('할일 로딩 오류: ' + err.message);
+  }));
+
+  // Realtime: activity feed (orderBy 제거 → 클라이언트 정렬)
+  const actQ = query(
+    collection(db, 'activity'),
+    where('familyId', '==', familyId)
+  );
+  unsubscribers.push(onSnapshot(actQ, snap => {
+    const acts = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const ta = a.createdAt?.toMillis?.() || 0;
+        const tb = b.createdAt?.toMillis?.() || 0;
+        return tb - ta;
+      });
+    renderActivityFeed(acts);
+  }, err => console.error('[Activity] 쿼리 오류:', err.message)));
+
+  // Realtime: notifications (toUid 단일 조건 → 인덱스 불필요)
+  const notifQ = query(
+    collection(db, 'notifications'),
+    where('toUid', '==', currentUser.uid)
+  );
+  unsubscribers.push(onSnapshot(notifQ, snap => {
+    const notifs = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const ta = a.createdAt?.toMillis?.() || 0;
+        const tb = b.createdAt?.toMillis?.() || 0;
+        return tb - ta;
+      });
+    const unread = notifs.filter(n => !n.read).length;
+    document.getElementById('notif-badge').classList.toggle('hidden', unread === 0);
+    renderNotifications(notifs);
+  }, err => console.error('[Notifications] 쿼리 오류:', err.message)));
+}
+
+// ─── Render: Home Events ─────────────────────────────────────────────────
+function renderHomeEvents() {
+  const today = new Date().toISOString().slice(0, 10);
+  const todayEvents = allEvents.filter(e => e.date === today);
+  const el = document.getElementById('home-events-list');
+  if (todayEvents.length === 0) {
+    el.innerHTML = `<p class="text-body-sm text-on-surface-variant text-center py-8">오늘 일정이 없습니다</p>`;
+    return;
+  }
+  const colors = ['ev-primary','ev-secondary','ev-tertiary'];
+  el.innerHTML = todayEvents.map((ev, i) => `
+    <div class="${colors[i%3]} rounded-xl p-4 hover:scale-[1.01] transition-transform cursor-pointer">
+      <p class="text-label-md font-label-md text-primary">${ev.timeStart||''} ${ev.timeEnd ? '- '+ev.timeEnd : ''}</p>
+      <h4 class="text-body-md font-semibold text-on-surface">${ev.title}</h4>
+      ${ev.location ? `<p class="text-body-sm text-on-surface-variant mt-1">📍 ${ev.location}</p>` : ''}
+    </div>
+  `).join('');
+}
+
+// ─── Render: Home Tasks ──────────────────────────────────────────────────
+function renderHomeTasks() {
+  const today = new Date().toISOString().slice(0, 10);
+  const todayTasks = allTasks.slice(0, 5);
+  const done = todayTasks.filter(t => t.done).length;
+  const pct = todayTasks.length ? Math.round(done / todayTasks.length * 100) : 0;
+
+  document.getElementById('home-task-count').textContent = `${done} / ${todayTasks.length} 완료`;
+  document.getElementById('home-task-bar').style.width = pct + '%';
+
+  const el = document.getElementById('home-tasks-list');
+  if (todayTasks.length === 0) {
+    el.innerHTML = `<p class="text-body-sm text-on-surface-variant text-center py-4">할일이 없습니다</p>`;
+    return;
+  }
+  el.innerHTML = todayTasks.map(t => `
+    <div class="flex items-center gap-3 p-3 bg-background rounded-lg border border-surface-variant/20 hover:border-primary/30 transition-colors cursor-pointer"
+         onclick="toggleTask('${t.id}',${!t.done})">
+      <div class="w-6 h-6 rounded-full border-2 ${t.done ? 'border-secondary bg-secondary-container/30' : 'border-outline'} flex items-center justify-center flex-shrink-0">
+        ${t.done ? '<span class="material-symbols-outlined text-[14px] text-secondary">check</span>' : ''}
+      </div>
+      <div class="flex-grow min-w-0">
+        <p class="text-body-sm font-medium text-on-surface truncate ${t.done ? 'line-through opacity-60' : ''}">${t.title}</p>
+        ${t.priority === 'high' ? '<p class="text-[10px] text-error font-semibold">우선순위 높음</p>' : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── Render: Tasks Page ──────────────────────────────────────────────────
+function renderTasksPage() {
+  let tasks = [...allTasks];
+  if (currentFilter === 'mine') tasks = tasks.filter(t => t.assignees?.includes(currentUser.uid));
+  if (currentFilter === 'pending') tasks = tasks.filter(t => !t.done);
+  if (currentFilter === 'done') tasks = tasks.filter(t => t.done);
+
+  const done = allTasks.filter(t => t.done).length;
+  const total = allTasks.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('tasks-pct').textContent = pct + '%';
+  document.getElementById('tasks-count-label').textContent = `${done} / ${total} 완료`;
+  document.getElementById('tasks-progress-bar').style.width = pct + '%';
+
+  const el = document.getElementById('tasks-list');
+  if (tasks.length === 0) {
+    el.innerHTML = `<div class="flex flex-col items-center justify-center h-40 gap-3 text-on-surface-variant">
+      <span class="material-symbols-outlined text-4xl">checklist</span>
+      <p class="text-body-sm">할일이 없습니다</p>
+      <button onclick="openModal('event-modal');setModalType('task')" class="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-md font-label-md">+ 추가</button>
+    </div>`;
+    return;
+  }
+
+  const priBorderColor = { high: 'border-error', mid: 'border-primary', low: 'border-outline-variant' };
+  el.innerHTML = tasks.map(t => {
+    const assigneeNames = (t.assignees || []).map(uid => {
+      const m = familyMembers.find(m => m.uid === uid);
+      return m ? (m.displayName||m.email)[0].toUpperCase() : '?';
+    });
+    return `
+    <div class="group bg-surface-container-lowest p-4 rounded-xl shadow-[0px_2px_8px_rgba(0,0,0,0.04)] border-l-4 ${priBorderColor[t.priority||'mid']} flex items-center gap-4 hover:-translate-y-0.5 transition-transform duration-200">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)"
+             class="w-5 h-5 rounded border-outline-variant text-primary cursor-pointer flex-shrink-0"/>
+      <div class="flex-1 min-w-0">
+        <p class="text-body-md font-semibold text-on-surface truncate ${t.done?'line-through opacity-50':''}">${t.title}</p>
+        <div class="flex items-center gap-2 mt-1 flex-wrap">
+          ${t.priority==='high'?'<span class="text-[10px] font-bold text-error bg-error-container/30 px-1.5 py-0.5 rounded">높음</span>':''}
+          ${assigneeNames.length ? `<div class="flex gap-1">${assigneeNames.map(n=>`<span class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container text-[10px] font-bold flex items-center justify-center">${n}</span>`).join('')}</div>` : ''}
+          ${t.note ? `<span class="text-[11px] text-on-surface-variant truncate max-w-[120px]">${t.note}</span>` : ''}
+        </div>
+      </div>
+      <button onclick="deleteItem('task','${t.id}')" class="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-error-container/20 text-error transition-all flex-shrink-0">
+        <span class="material-symbols-outlined text-[18px]">delete</span>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// ─── Render: Leaderboard ─────────────────────────────────────────────────
+function renderLeaderboard() {
+  const scores = {};
+  familyMembers.forEach(m => { scores[m.uid] = 0; });
+  allTasks.filter(t => t.done).forEach(t => {
+    (t.assignees || []).forEach(uid => { scores[uid] = (scores[uid]||0) + 10; });
+  });
+  const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const el = document.getElementById('leaderboard');
+  if (sorted.every(([,s]) => s === 0)) {
+    el.innerHTML = '<p class="text-body-sm opacity-70">아직 완료된 할일이 없습니다</p>';
+    return;
+  }
+  el.innerHTML = sorted.map(([uid, pts], i) => {
+    const m = familyMembers.find(m => m.uid === uid);
+    const name = m ? (m.displayName || m.email).split(' ')[0] : '?';
+    const medals = ['🥇','🥈','🥉'];
+    return `<div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">${medals[i]||''}</span>
+        <span class="text-body-md">${name}</span>
+      </div>
+      <span class="font-bold text-body-md">${pts}pt</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── Render: Calendar ────────────────────────────────────────────────────
+function renderCalendar() {
+  const label = `${calYear}년 ${calMonth+1}월`;
+  document.getElementById('cal-month-label').textContent = label;
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+  const grid = document.getElementById('cal-grid');
+
+  let html = '';
+  // Empty cells
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div class="min-h-[80px] p-1 border-r border-b border-outline-variant/30 bg-surface-container/30"></div>';
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+    const dayEvents = allEvents.filter(e => e.date === dateStr);
+    const dow = (firstDay + d - 1) % 7;
+    const isWeekend = dow === 0 || dow === 6;
+
+    html += `<div onclick="selectCalDay('${dateStr}',${d})" class="min-h-[80px] p-1.5 border-r border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container/50 transition-colors">
+      <span class="w-6 h-6 flex items-center justify-center rounded-full text-label-md font-bold mb-1
+        ${isToday ? 'bg-primary text-on-primary' : isWeekend ? 'text-error' : 'text-on-surface'}">
+        ${d}
+      </span>
+      <div class="space-y-0.5">
+        ${dayEvents.slice(0,2).map(ev => `
+          <div class="text-[10px] font-medium px-1 py-0.5 rounded bg-primary-fixed/60 text-primary truncate">${ev.title}</div>
+        `).join('')}
+        ${dayEvents.length > 2 ? `<div class="text-[10px] text-outline">+${dayEvents.length-2}개</div>` : ''}
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function selectCalDay(dateStr, d) {
+  const dayEvents = allEvents.filter(e => e.date === dateStr);
+  const container = document.getElementById('cal-day-events');
+  const title = document.getElementById('cal-day-title');
+  const list = document.getElementById('cal-day-list');
+  title.textContent = `${calYear}년 ${calMonth+1}월 ${d}일 일정 (${dayEvents.length}개)`;
+  if (dayEvents.length === 0) {
+    list.innerHTML = `<p class="text-body-sm text-on-surface-variant py-4">이 날의 일정이 없습니다</p>
+      <button onclick="openModal('event-modal');document.getElementById('modal-date').value='${dateStr}'" class="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-md font-label-md">+ 일정 추가</button>`;
+  } else {
+    list.innerHTML = dayEvents.map(ev => `
+      <div class="flex items-start gap-3 p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/30 hover:border-primary/30 transition-colors">
+        <div class="w-1 self-stretch rounded-full bg-primary flex-shrink-0"></div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-on-surface text-body-md">${ev.title}</p>
+          ${ev.timeStart ? `<p class="text-label-md text-on-surface-variant">${ev.timeStart}${ev.timeEnd?' - '+ev.timeEnd:''}</p>` : ''}
+          ${ev.location ? `<p class="text-body-sm text-on-surface-variant">📍 ${ev.location}</p>` : ''}
+        </div>
+        <button onclick="deleteItem('event','${ev.id}')" class="p-1 text-outline hover:text-error transition-colors">
+          <span class="material-symbols-outlined text-[18px]">delete</span>
+        </button>
+      </div>`).join('');
+  }
+  container.classList.remove('hidden');
+}
+
+window.changeCalMonth = function(delta) {
+  calMonth += delta;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+  document.getElementById('cal-day-events').classList.add('hidden');
+};
+window.goToday = function() {
+  calYear = new Date().getFullYear();
+  calMonth = new Date().getMonth();
+  renderCalendar();
+};
+window.selectCalDay = selectCalDay;
+
+// ─── Render: Calendar member filter ─────────────────────────────────────
+function renderCalendarMemberFilter() {
+  const el = document.getElementById('calendar-member-list');
+  const colors = ['bg-primary-container text-on-primary-container','bg-secondary-container text-on-secondary-container','bg-tertiary-container text-on-tertiary-container'];
+  el.innerHTML = familyMembers.map((m, i) => `
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl ${colors[i%3]} flex items-center justify-center font-bold text-sm">${(m.displayName||m.email)[0].toUpperCase()}</div>
+      <div class="flex-1">
+        <p class="text-body-sm font-semibold text-on-surface">${m.displayName || m.email}</p>
+        <p class="text-[11px] text-on-surface-variant">${m.role === 'admin' ? '관리자' : '멤버'}</p>
+      </div>
+    </div>`).join('');
+}
+
+// ─── Render: Family Members (Settings) ──────────────────────────────────
+function renderFamilyMembers() {
+  const el = document.getElementById('family-members-list');
+  el.innerHTML = familyMembers.map(m => `
+    <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-container-low transition-colors">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-lg">
+          ${m.photoURL ? `<img src="${m.photoURL}" class="w-full h-full object-cover rounded-full"/>` : (m.displayName||m.email)[0].toUpperCase()}
+        </div>
+        <div>
+          <h4 class="text-body-lg font-semibold text-on-surface">${m.displayName||'(이름 없음)'}</h4>
+          <p class="text-body-sm text-on-surface-variant">${m.email}</p>
+        </div>
+      </div>
+      <span class="px-3 py-1 ${m.role==='admin'?'bg-primary text-on-primary':'bg-surface-container text-on-surface-variant'} text-label-md font-label-md rounded-full">${m.role==='admin'?'관리자':'멤버'}</span>
+    </div>`).join('');
+}
+
+// ─── Render: Activity Feed ───────────────────────────────────────────────
+function renderActivityFeed(activities) {
+  const el = document.getElementById('activity-feed');
+  if (!activities.length) {
+    el.innerHTML = '<p class="text-body-sm text-on-surface-variant text-center py-4">활동 내역이 없습니다</p>';
+    return;
+  }
+  el.innerHTML = activities.slice(0,10).map(a => `
+    <div class="flex gap-3">
+      <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">
+        ${a.userName ? a.userName[0].toUpperCase() : '?'}
+      </div>
+      <div class="bg-surface-container-low p-3 rounded-tr-xl rounded-br-xl rounded-bl-xl flex-grow">
+        <p class="text-body-sm">${a.message}</p>
+        <p class="text-[10px] text-outline mt-1">${formatTime(a.createdAt)}</p>
+      </div>
+    </div>`).join('');
+}
+
+// ─── Render: Notifications ───────────────────────────────────────────────
+function renderNotifications(notifs) {
+  const el = document.getElementById('notifications-list');
+  if (!notifs.length) {
+    el.innerHTML = '<div class="flex flex-col items-center justify-center h-40 gap-3 text-on-surface-variant"><span class="material-symbols-outlined text-4xl">notifications_none</span><p class="text-body-sm">알림이 없습니다</p></div>';
+    return;
+  }
+  el.innerHTML = notifs.map(n => `
+    <div class="flex gap-4 p-4 ${n.read?'bg-surface-container-lowest':'bg-primary-fixed/20'} rounded-xl border border-outline-variant/30 cursor-pointer hover:bg-surface-container transition-colors"
+         onclick="markNotifRead('${n.id}')">
+      <span class="material-symbols-outlined ${n.read?'text-on-surface-variant':'text-primary'} flex-shrink-0">
+        ${n.type==='task'?'assignment_turned_in':n.type==='event'?'event':'notifications'}
+      </span>
+      <div class="flex-1">
+        <p class="text-body-sm font-${n.read?'normal':'semibold'} text-on-surface">${n.message}</p>
+        <p class="text-[11px] text-on-surface-variant mt-1">${formatTime(n.createdAt)}</p>
+      </div>
+      ${!n.read ? '<div class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></div>' : ''}
+    </div>`).join('');
+}
+
+async function markNotifRead(id) {
+  await updateDoc(doc(db, 'notifications', id), { read: true });
+}
+
+// ─── Auth Actions ─────────────────────────────────────────────────────────
+window.switchAuthTab = function(tab) {
+  document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('form-signup').classList.toggle('hidden', tab !== 'signup');
+  document.getElementById('tab-login').className = `flex-1 py-2 rounded-lg text-label-md font-label-md transition-all ${tab==='login'?'bg-surface-container-lowest text-primary shadow-sm':'text-on-surface-variant'}`;
+  document.getElementById('tab-signup').className = `flex-1 py-2 rounded-lg text-label-md font-label-md transition-all ${tab==='signup'?'bg-surface-container-lowest text-primary shadow-sm':'text-on-surface-variant'}`;
+  document.getElementById('auth-error').classList.add('hidden');
+};
+
+window.emailLogin = async function() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  if (!email || !pw) return showAuthError('이메일과 비밀번호를 입력하세요');
+  setAuthLoading('btn-login', true);
+  try {
+    await signInWithEmailAndPassword(auth, email, pw);
+  } catch(e) {
+    showAuthError(friendlyAuthError(e.code));
+    setAuthLoading('btn-login', false);
+  }
+};
+
+window.emailSignup = async function() {
+  const name  = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pw    = document.getElementById('signup-pw').value;
+  if (!name || !email || !pw) return showAuthError('모든 항목을 입력하세요');
+  if (pw.length < 6) return showAuthError('비밀번호는 6자 이상이어야 합니다');
+  setAuthLoading('btn-signup', true);
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pw);
+    await updateProfile(cred.user, { displayName: name });
+    currentUser = cred.user;
+  } catch(e) {
+    showAuthError(friendlyAuthError(e.code));
+    setAuthLoading('btn-signup', false);
+  }
+};
+
+window.googleLogin = async function() {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user') showAuthError(friendlyAuthError(e.code));
+  }
+};
+
+window.signOut = async function() {
+  if (!confirm('로그아웃하시겠습니까?')) return;
+  await fbSignOut(auth);
+};
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+function setAuthLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.innerHTML = loading ? '<span class="spinner"></span>' : (btnId==='btn-login' ? '로그인' : '가입하기');
+  btn.disabled = loading;
+}
+function friendlyAuthError(code) {
+  const map = {
+    'auth/user-not-found':'등록되지 않은 이메일입니다',
+    'auth/wrong-password':'비밀번호가 맞지 않습니다',
+    'auth/email-already-in-use':'이미 사용 중인 이메일입니다',
+    'auth/invalid-email':'올바른 이메일 형식이 아닙니다',
+    'auth/too-many-requests':'잠시 후 다시 시도해주세요',
+    'auth/network-request-failed':'네트워크 오류가 발생했습니다',
+  };
+  return map[code] || '오류가 발생했습니다: ' + code;
+}
+
+// ─── Item CRUD ────────────────────────────────────────────────────────────
+window.saveItem = async function() {
+  const title = document.getElementById('modal-item-title').value.trim();
+  if (!title) return showToast('제목을 입력하세요');
+
+  const btn = document.getElementById('btn-save-item');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  try {
+    if (modalType === 'event') {
+      const data = {
+        familyId,
+        title,
+        date: document.getElementById('modal-date').value || new Date().toISOString().slice(0,10),
+        timeStart: document.getElementById('modal-time-start').value || '',
+        timeEnd:   document.getElementById('modal-time-end').value || '',
+        location:  document.getElementById('modal-location').value.trim(),
+        assignees: selectedAssignees,
+        note: document.getElementById('modal-note').value.trim(),
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp()
+      };
+      await addDoc(collection(db, 'events'), data);
+      await logActivity('event_added', `${currentUser.displayName||currentUser.email}님이 일정을 추가했습니다: ${title}`);
+      await sendFamilyNotification(`새 일정: ${title}`, 'event');
+      showToast('일정이 추가되었습니다 ✅');
+    } else {
+      const data = {
+        familyId,
+        title,
+        priority: taskPriority,
+        assignees: selectedAssignees,
+        note: document.getElementById('modal-note').value.trim(),
+        done: false,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp()
+      };
+      await addDoc(collection(db, 'tasks'), data);
+      await logActivity('task_added', `${currentUser.displayName||currentUser.email}님이 할일을 추가했습니다: ${title}`);
+      await sendFamilyNotification(`새 할일: ${title}`, 'task');
+      showToast('할일이 추가되었습니다 ✅');
+    }
+    closeModal('event-modal');
+    resetModal();
+  } catch(e) {
+    showToast('저장 실패: ' + e.message);
+  }
+  btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span>저장';
+  btn.disabled = false;
+};
+
+window.toggleTask = async function(id, done) {
+  try {
+    await updateDoc(doc(db, 'tasks', id), { done, updatedAt: serverTimestamp() });
+    if (done) {
+      const task = allTasks.find(t => t.id === id);
+      if (task) await logActivity('task_done', `${currentUser.displayName||currentUser.email}님이 완료했습니다: ${task.title}`);
+    }
+  } catch(e) { showToast('업데이트 실패'); }
+};
+
+window.deleteItem = async function(type, id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  try {
+    await deleteDoc(doc(db, type === 'event' ? 'events' : 'tasks', id));
+    showToast('삭제되었습니다');
+  } catch(e) { showToast('삭제 실패'); }
+};
+
+// ─── Profile ──────────────────────────────────────────────────────────────
+window.updateDisplayName = async function() {
+  const name = document.getElementById('edit-display-name').value.trim();
+  if (!name) return showToast('이름을 입력하세요');
+  try {
+    await updateProfile(currentUser, { displayName: name });
+    await updateDoc(doc(db, 'users', currentUser.uid), { displayName: name });
+    updateHeaderUI();
+    showToast('이름이 저장되었습니다 ✅');
+  } catch(e) { showToast('저장 실패'); }
+};
+
+window.uploadProfilePhoto = async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) return showToast('5MB 이하 파일만 가능합니다');
+  showToast('업로드 중...');
+  try {
+    const ref = storageRef(storage, `avatars/${currentUser.uid}`);
+    await uploadBytes(ref, file);
+    const url = await getDownloadURL(ref);
+    await updateProfile(currentUser, { photoURL: url });
+    await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: url });
+    updateHeaderUI();
+    showToast('프로필 사진이 업데이트되었습니다 ✅');
+  } catch(e) { showToast('업로드 실패: ' + e.message); }
+};
+
+// ─── Family / Invite ─────────────────────────────────────────────────────
+window.joinFamily = async function() {
+  const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+  if (!code || code.length !== 6) return showToast('올바른 코드를 입력하세요 (6자리)');
+
+  try {
+    const famSnap = await getDoc(doc(db, 'families', code));
+    if (!famSnap.exists()) return showToast('존재하지 않는 코드입니다');
+
+    const members = famSnap.data().members || [];
+    if (members.includes(currentUser.uid)) return showToast('이미 참여 중인 가족입니다');
+
+    // Leave old family
+    if (familyId && familyId !== code) {
+      const oldFam = await getDoc(doc(db, 'families', familyId));
+      if (oldFam.exists()) {
+        const oldMembers = oldFam.data().members.filter(id => id !== currentUser.uid);
+        await updateDoc(doc(db, 'families', familyId), { members: oldMembers });
+      }
+    }
+
+    // Join new family
+    await updateDoc(doc(db, 'families', code), { members: [...members, currentUser.uid] });
+    await updateDoc(doc(db, 'users', currentUser.uid), { familyId: code, role: 'member' });
+    familyId = code;
+    await logActivity('member_joined', `${currentUser.displayName||currentUser.email}님이 가족에 참여했습니다`);
+
+    showToast('가족에 참여했습니다 🎉');
+    document.getElementById('join-code-input').value = '';
+    // Reload
+    unsubscribers.forEach(u => u());
+    unsubscribers = [];
+    await loadFamilyData();
+  } catch(e) { showToast('참여 실패: ' + e.message); }
+};
+
+window.copyInviteCode = function() {
+  navigator.clipboard.writeText(familyId).then(() => showToast('코드가 복사되었습니다 📋'));
+};
+
+// ─── Notifications (FCM) ────────────────────────────────────────────────
+window.toggleNotifications = async function(enabled) {
+  if (!enabled || !messaging) return;
+  try {
+    const token = await getToken(messaging, { vapidKey: 'YOUR_VAPID_KEY_HERE' });
+    if (token) {
+      await updateDoc(doc(db, 'users', currentUser.uid), { fcmToken: token });
+      showToast('알림이 활성화되었습니다 🔔');
+    }
+  } catch(e) {
+    document.getElementById('notif-toggle').checked = false;
+    showToast('알림 설정 실패: 브라우저 권한을 확인하세요');
+  }
+};
+
+if (messaging) {
+  onMessage(messaging, payload => {
+    showToast(`🔔 ${payload.notification?.title || '새 알림'}`);
+  });
+}
+
+async function sendFamilyNotification(message, type) {
+  try {
+    for (const member of familyMembers) {
+      if (member.uid === currentUser.uid) continue;
+      await addDoc(collection(db, 'notifications'), {
+        toUid: member.uid,
+        familyId,
+        message,
+        type,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+    }
+  } catch(e) { console.warn('Notification error:', e); }
+}
+
+// ─── Activity Log ─────────────────────────────────────────────────────────
+async function logActivity(type, message) {
+  try {
+    await addDoc(collection(db, 'activity'), {
+      familyId,
+      type,
+      message,
+      userName: currentUser.displayName || currentUser.email,
+      uid: currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+  } catch(e) { console.warn('Activity log error:', e); }
+}
+
+// ─── Modal logic ─────────────────────────────────────────────────────────
+window.openModal = function(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderAssigneeChips();
+};
+window.closeModal = function(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+};
+document.querySelectorAll('.modal-bg').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+});
+
+function resetModal() {
+  document.getElementById('modal-item-title').value = '';
+  document.getElementById('modal-date').value = '';
+  document.getElementById('modal-time-start').value = '';
+  document.getElementById('modal-time-end').value = '';
+  document.getElementById('modal-location').value = '';
+  document.getElementById('modal-note').value = '';
+  selectedAssignees = [];
+  taskPriority = 'mid';
+  setModalType('event');
+}
+
+window.setModalType = function(type) {
+  modalType = type;
+  document.getElementById('event-fields').classList.toggle('hidden', type !== 'event');
+  document.getElementById('task-fields').classList.toggle('hidden', type !== 'task');
+  document.getElementById('type-event').className = `flex-1 py-2 rounded-xl text-label-md font-label-md transition-all ${type==='event'?'bg-primary text-on-primary':'bg-surface-container text-on-surface-variant'}`;
+  document.getElementById('type-task').className  = `flex-1 py-2 rounded-xl text-label-md font-label-md transition-all ${type==='task'?'bg-primary text-on-primary':'bg-surface-container text-on-surface-variant'}`;
+  document.getElementById('modal-title').textContent = type === 'event' ? '새 일정 추가' : '새 할일 추가';
+};
+
+window.setTaskPriority = function(p) {
+  taskPriority = p;
+  ['high','mid','low'].forEach(x => {
+    const btn = document.getElementById('pri-'+x);
+    btn.className = `flex-1 py-2 rounded-xl border-2 text-label-md font-label-md transition-colors ${
+      x===p ? (x==='high'?'border-error bg-error-container/30 text-error':'border-primary bg-primary-fixed text-primary') : 'border-outline-variant text-on-surface-variant hover:bg-surface-container'
+    }`;
+  });
+};
+
+function renderAssigneeChips() {
+  const el = document.getElementById('modal-assignee-chips');
+  if (!familyMembers.length) {
+    el.innerHTML = '<p class="text-body-sm text-on-surface-variant">멤버 없음</p>';
+    return;
+  }
+  el.innerHTML = familyMembers.map(m => {
+    const sel = selectedAssignees.includes(m.uid);
+    return `<button type="button" onclick="toggleAssignee('${m.uid}')" id="assignee-${m.uid}"
+      class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all text-label-md font-label-md
+             ${sel?'border-primary bg-primary text-white':'border-outline-variant bg-white text-on-surface'}">
+      <span class="w-5 h-5 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">${(m.displayName||m.email)[0].toUpperCase()}</span>
+      ${(m.displayName||m.email).split(' ')[0]}
+    </button>`;
+  }).join('');
+}
+
+window.toggleAssignee = function(uid) {
+  if (selectedAssignees.includes(uid)) {
+    selectedAssignees = selectedAssignees.filter(id => id !== uid);
+  } else {
+    selectedAssignees.push(uid);
+  }
+  renderAssigneeChips();
+};
+
+// ─── Task filter ──────────────────────────────────────────────────────────
+window.filterTasks = function(f) {
+  currentFilter = f;
+  document.querySelectorAll('.task-filter').forEach(btn => {
+    btn.className = 'task-filter whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors';
+  });
+  document.getElementById('filter-'+f).className = 'task-filter whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary text-label-md font-label-md';
+  renderTasksPage();
+};
+
+// ─── Page Navigation ─────────────────────────────────────────────────────
+const PAGES = ['home','calendar','tasks','settings','notifications'];
+window.showPage = function(name) {
+  PAGES.forEach(p => document.getElementById('page-'+p)?.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+
+  document.querySelectorAll('.desk-nav').forEach(b => {
+    b.className = 'desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all';
+  });
+  const db2 = document.getElementById('nav-'+name);
+  if (db2) db2.className = 'desk-nav w-12 h-12 flex items-center justify-center rounded-xl bg-primary text-on-primary shadow-md transition-all';
+
+  document.querySelectorAll('.mob-nav').forEach(b => {
+    b.className = 'mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors';
+  });
+  const mb = document.getElementById('mob-'+name);
+  if (mb) mb.className = 'mob-nav flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 transition-all';
+
+  window.scrollTo({top:0, behavior:'smooth'});
+};
+
+// ─── Utilities ────────────────────────────────────────────────────────────
+function genCode(n) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:n}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return '방금 전';
+  if (diff < 3600) return `${Math.floor(diff/60)}분 전`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}시간 전`;
+  return `${Math.floor(diff/86400)}일 전`;
+}
+
+window.showToast = function(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+};
+
+// ─── PWA ──────────────────────────────────────────────────────────────────
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+window.installApp = function() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r => {
+      if (r.outcome === 'accepted') document.getElementById('install-banner').style.display = 'none';
+      deferredPrompt = null;
+    });
+  }
+};
+
+// Init calendar date display
+renderCalendar();
+</script>
+</body>
+</html>
