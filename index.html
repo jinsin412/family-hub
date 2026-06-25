@@ -537,22 +537,33 @@ tailwind.config = {
 </nav>
 
 <!-- ═══════════════════════════════════════════════
-     MODAL: CREATE EVENT / TASK
+     MODAL: CREATE / EDIT EVENT & TASK
 ═══════════════════════════════════════════════ -->
 <div id="event-modal" class="modal-bg">
   <div class="modal-box">
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-headline-md font-headline-md text-primary" id="modal-title">새 일정 추가</h2>
-        <p class="text-body-sm text-on-surface-variant">가족과 공유할 일정을 만드세요</p>
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <div>
+          <h2 class="text-headline-md font-headline-md text-primary" id="modal-title">새 일정 추가</h2>
+          <!-- 수정 모드일 때만 표시: 최종 수정자 정보 -->
+          <p id="modal-last-editor" class="text-[11px] text-on-surface-variant mt-0.5 hidden"></p>
+        </div>
+        <!-- 수정 모드 배지 -->
+        <span id="modal-edit-badge" class="hidden px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed-variant text-[11px] font-bold rounded-full">수정 중</span>
       </div>
-      <button onclick="closeModal('event-modal')" class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <div class="flex items-center gap-1">
+        <!-- 수정 모드일 때만 표시: 삭제 버튼 -->
+        <button id="modal-delete-btn" onclick="deleteFromModal()" class="hidden p-2 rounded-full hover:bg-error-container/20 text-error transition-colors" title="삭제">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+        <button onclick="closeModal('event-modal')" class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Type selector -->
-    <div class="flex gap-2 mb-6">
+    <!-- Type selector (신규 모드만 표시) -->
+    <div id="modal-type-selector" class="flex gap-2 mb-5">
       <button onclick="setModalType('event')" id="type-event" class="flex-1 py-2 rounded-xl bg-primary text-on-primary text-label-md font-label-md transition-all">📅 일정</button>
       <button onclick="setModalType('task')" id="type-task" class="flex-1 py-2 rounded-xl bg-surface-container text-on-surface-variant text-label-md font-label-md transition-all">✅ 할일</button>
     </div>
@@ -614,6 +625,17 @@ tailwind.config = {
         </button>
         <button onclick="closeModal('event-modal')" class="px-6 bg-surface-container-high text-on-surface-variant h-12 rounded-xl hover:bg-surface-container-highest transition-colors">취소</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div id="confirm-overlay" class="modal-bg" style="z-index:9999;">
+  <div style="background:#faf9f7;border-radius:1rem;padding:1.5rem;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <p id="confirm-message" style="font-family:'Be Vietnam Pro',sans-serif;font-size:16px;color:#1a1c1b;text-align:center;margin-bottom:1.5rem;line-height:1.5;"></p>
+    <div style="display:flex;gap:0.75rem;">
+      <button id="confirm-no" style="flex:1;padding:0.75rem;border-radius:0.75rem;border:2px solid #c2c6d1;background:transparent;font-size:14px;font-weight:600;color:#424750;cursor:pointer;">취소</button>
+      <button id="confirm-yes" style="flex:1;padding:0.75rem;border-radius:0.75rem;border:none;background:#ba1a1a;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">삭제</button>
     </div>
   </div>
 </div>
@@ -690,6 +712,8 @@ let modalType     = 'event';
 let taskPriority  = 'mid';
 let selectedAssignees = [];
 let unsubscribers = [];
+let editingId     = null;   // null = 신규, string = 수정 중인 문서 ID
+let editingType   = null;   // 'event' | 'task'
 
 // ─── Auth state ──────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async user => {
@@ -727,7 +751,7 @@ async function initUserProfile(user) {
       createdAt: serverTimestamp(),
       members: [user.uid]
     });
-    await logActivity('family_joined', `${user.displayName || '사용자'}님이 Family Hub를 시작했습니다`);
+    logActivity('family_joined', `${user.displayName || '사용자'}님이 Family Hub를 시작했습니다`);
   } else {
     familyId = snap.data().familyId;
   }
@@ -881,43 +905,53 @@ function renderHomeEvents() {
   const today = new Date().toISOString().slice(0, 10);
   const todayEvents = allEvents.filter(e => e.date === today);
   const el = document.getElementById('home-events-list');
+  if (!el) return;
   if (todayEvents.length === 0) {
     el.innerHTML = `<p class="text-body-sm text-on-surface-variant text-center py-8">오늘 일정이 없습니다</p>`;
     return;
   }
   const colors = ['ev-primary','ev-secondary','ev-tertiary'];
   el.innerHTML = todayEvents.map((ev, i) => `
-    <div class="${colors[i%3]} rounded-xl p-4 hover:scale-[1.01] transition-transform cursor-pointer">
-      <p class="text-label-md font-label-md text-primary">${ev.timeStart||''} ${ev.timeEnd ? '- '+ev.timeEnd : ''}</p>
-      <h4 class="text-body-md font-semibold text-on-surface">${ev.title}</h4>
-      ${ev.location ? `<p class="text-body-sm text-on-surface-variant mt-1">📍 ${ev.location}</p>` : ''}
+    <div class="${colors[i%3]} rounded-xl p-4 cursor-pointer group relative" onclick="openEditEvent('${ev.id}')">
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex-1 min-w-0">
+          <p class="text-label-md font-label-md text-primary">${escHtml(ev.timeStart||'')} ${ev.timeEnd ? '- '+escHtml(ev.timeEnd) : ''}</p>
+          <h4 class="text-body-md font-semibold text-on-surface">${escHtml(ev.title)}</h4>
+          ${ev.location ? `<p class="text-body-sm text-on-surface-variant mt-1">📍 ${escHtml(ev.location)}</p>` : ''}
+          ${ev.lastEditedBy ? `<p class="text-[10px] text-outline mt-1">✏️ ${escHtml(getMemberName(ev.lastEditedBy))} 수정</p>` : ''}
+        </div>
+        <span class="material-symbols-outlined text-[18px] text-primary opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0 mt-0.5">edit</span>
+      </div>
     </div>
   `).join('');
 }
 
 // ─── Render: Home Tasks ──────────────────────────────────────────────────
 function renderHomeTasks() {
-  const today = new Date().toISOString().slice(0, 10);
   const todayTasks = allTasks.slice(0, 5);
   const done = todayTasks.filter(t => t.done).length;
   const pct = todayTasks.length ? Math.round(done / todayTasks.length * 100) : 0;
 
-  document.getElementById('home-task-count').textContent = `${done} / ${todayTasks.length} 완료`;
-  document.getElementById('home-task-bar').style.width = pct + '%';
+  const countEl = document.getElementById('home-task-count');
+  const barEl   = document.getElementById('home-task-bar');
+  const listEl  = document.getElementById('home-tasks-list');
+  if (!countEl || !barEl || !listEl) return;
 
-  const el = document.getElementById('home-tasks-list');
+  countEl.textContent = `${done} / ${todayTasks.length} 완료`;
+  barEl.style.width = pct + '%';
+
   if (todayTasks.length === 0) {
-    el.innerHTML = `<p class="text-body-sm text-on-surface-variant text-center py-4">할일이 없습니다</p>`;
+    listEl.innerHTML = `<p class="text-body-sm text-on-surface-variant text-center py-4">할일이 없습니다</p>`;
     return;
   }
-  el.innerHTML = todayTasks.map(t => `
+  listEl.innerHTML = todayTasks.map(t => `
     <div class="flex items-center gap-3 p-3 bg-background rounded-lg border border-surface-variant/20 hover:border-primary/30 transition-colors cursor-pointer"
          onclick="toggleTask('${t.id}',${!t.done})">
       <div class="w-6 h-6 rounded-full border-2 ${t.done ? 'border-secondary bg-secondary-container/30' : 'border-outline'} flex items-center justify-center flex-shrink-0">
         ${t.done ? '<span class="material-symbols-outlined text-[14px] text-secondary">check</span>' : ''}
       </div>
       <div class="flex-grow min-w-0">
-        <p class="text-body-sm font-medium text-on-surface truncate ${t.done ? 'line-through opacity-60' : ''}">${t.title}</p>
+        <p class="text-body-sm font-medium text-on-surface truncate ${t.done ? 'line-through opacity-60' : ''}">${escHtml(t.title)}</p>
         ${t.priority === 'high' ? '<p class="text-[10px] text-error font-semibold">우선순위 높음</p>' : ''}
       </div>
     </div>
@@ -926,19 +960,25 @@ function renderHomeTasks() {
 
 // ─── Render: Tasks Page ──────────────────────────────────────────────────
 function renderTasksPage() {
+  const el = document.getElementById('tasks-list');
+  if (!el) return;
+
   let tasks = [...allTasks];
   if (currentFilter === 'mine') tasks = tasks.filter(t => t.assignees?.includes(currentUser.uid));
   if (currentFilter === 'pending') tasks = tasks.filter(t => !t.done);
   if (currentFilter === 'done') tasks = tasks.filter(t => t.done);
 
-  const done = allTasks.filter(t => t.done).length;
+  const done  = allTasks.filter(t => t.done).length;
   const total = allTasks.length;
-  const pct = total ? Math.round(done/total*100) : 0;
-  document.getElementById('tasks-pct').textContent = pct + '%';
-  document.getElementById('tasks-count-label').textContent = `${done} / ${total} 완료`;
-  document.getElementById('tasks-progress-bar').style.width = pct + '%';
+  const pct   = total ? Math.round(done/total*100) : 0;
 
-  const el = document.getElementById('tasks-list');
+  const pctEl   = document.getElementById('tasks-pct');
+  const cntEl   = document.getElementById('tasks-count-label');
+  const barEl   = document.getElementById('tasks-progress-bar');
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (cntEl) cntEl.textContent = `${done} / ${total} 완료`;
+  if (barEl) barEl.style.width = pct + '%';
+
   if (tasks.length === 0) {
     el.innerHTML = `<div class="flex flex-col items-center justify-center h-40 gap-3 text-on-surface-variant">
       <span class="material-symbols-outlined text-4xl">checklist</span>
@@ -952,23 +992,30 @@ function renderTasksPage() {
   el.innerHTML = tasks.map(t => {
     const assigneeNames = (t.assignees || []).map(uid => {
       const m = familyMembers.find(m => m.uid === uid);
-      return m ? (m.displayName||m.email)[0].toUpperCase() : '?';
+      return m ? escHtml((m.displayName||m.email)[0].toUpperCase()) : '?';
     });
+    const borderColor = priBorderColor[t.priority||'mid'] || 'border-primary';
     return `
-    <div class="group bg-surface-container-lowest p-4 rounded-xl shadow-[0px_2px_8px_rgba(0,0,0,0.04)] border-l-4 ${priBorderColor[t.priority||'mid']} flex items-center gap-4 hover:-translate-y-0.5 transition-transform duration-200">
+    <div class="group bg-surface-container-lowest p-4 rounded-xl shadow-[0px_2px_8px_rgba(0,0,0,0.04)] border-l-4 ${borderColor} flex items-center gap-4 hover:-translate-y-0.5 transition-transform duration-200">
       <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}',this.checked)"
              class="w-5 h-5 rounded border-outline-variant text-primary cursor-pointer flex-shrink-0"/>
-      <div class="flex-1 min-w-0">
-        <p class="text-body-md font-semibold text-on-surface truncate ${t.done?'line-through opacity-50':''}">${t.title}</p>
+      <div class="flex-1 min-w-0 cursor-pointer" onclick="openEditTask('${t.id}')">
+        <p class="text-body-md font-semibold text-on-surface truncate ${t.done?'line-through opacity-50':''}">${escHtml(t.title)}</p>
         <div class="flex items-center gap-2 mt-1 flex-wrap">
           ${t.priority==='high'?'<span class="text-[10px] font-bold text-error bg-error-container/30 px-1.5 py-0.5 rounded">높음</span>':''}
           ${assigneeNames.length ? `<div class="flex gap-1">${assigneeNames.map(n=>`<span class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container text-[10px] font-bold flex items-center justify-center">${n}</span>`).join('')}</div>` : ''}
-          ${t.note ? `<span class="text-[11px] text-on-surface-variant truncate max-w-[120px]">${t.note}</span>` : ''}
+          ${t.note ? `<span class="text-[11px] text-on-surface-variant truncate max-w-[120px]">${escHtml(t.note)}</span>` : ''}
+          ${t.lastEditedBy ? `<span class="text-[10px] text-outline">✏️ ${escHtml(getMemberName(t.lastEditedBy))}</span>` : ''}
         </div>
       </div>
-      <button onclick="deleteItem('task','${t.id}')" class="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-error-container/20 text-error transition-all flex-shrink-0">
-        <span class="material-symbols-outlined text-[18px]">delete</span>
-      </button>
+      <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+        <button onclick="openEditTask('${t.id}')" class="p-1.5 rounded-full hover:bg-primary-fixed text-primary transition-colors" title="수정">
+          <span class="material-symbols-outlined text-[18px]">edit</span>
+        </button>
+        <button onclick="deleteItem('task','${t.id}')" class="p-1.5 rounded-full hover:bg-error-container/20 text-error transition-all">
+          <span class="material-symbols-outlined text-[18px]">delete</span>
+        </button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1029,7 +1076,7 @@ function renderCalendar() {
       </span>
       <div class="space-y-0.5">
         ${dayEvents.slice(0,2).map(ev => `
-          <div class="text-[10px] font-medium px-1 py-0.5 rounded bg-primary-fixed/60 text-primary truncate">${ev.title}</div>
+          <div class="text-[10px] font-medium px-1 py-0.5 rounded bg-primary-fixed/60 text-primary truncate">${escHtml(ev.title)}</div>
         `).join('')}
         ${dayEvents.length > 2 ? `<div class="text-[10px] text-outline">+${dayEvents.length-2}개</div>` : ''}
       </div>
@@ -1051,14 +1098,20 @@ function selectCalDay(dateStr, d) {
     list.innerHTML = dayEvents.map(ev => `
       <div class="flex items-start gap-3 p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/30 hover:border-primary/30 transition-colors">
         <div class="w-1 self-stretch rounded-full bg-primary flex-shrink-0"></div>
-        <div class="flex-1 min-w-0">
-          <p class="font-semibold text-on-surface text-body-md">${ev.title}</p>
-          ${ev.timeStart ? `<p class="text-label-md text-on-surface-variant">${ev.timeStart}${ev.timeEnd?' - '+ev.timeEnd:''}</p>` : ''}
-          ${ev.location ? `<p class="text-body-sm text-on-surface-variant">📍 ${ev.location}</p>` : ''}
+        <div class="flex-1 min-w-0 cursor-pointer" onclick="openEditEvent('${ev.id}')">
+          <p class="font-semibold text-on-surface text-body-md">${escHtml(ev.title)}</p>
+          ${ev.timeStart ? `<p class="text-label-md text-on-surface-variant">${escHtml(ev.timeStart)}${ev.timeEnd?' - '+escHtml(ev.timeEnd):''}</p>` : ''}
+          ${ev.location ? `<p class="text-body-sm text-on-surface-variant">📍 ${escHtml(ev.location)}</p>` : ''}
+          ${ev.lastEditedBy ? `<p class="text-[10px] text-outline mt-1">✏️ ${escHtml(getMemberName(ev.lastEditedBy))} 수정</p>` : ''}
         </div>
-        <button onclick="deleteItem('event','${ev.id}')" class="p-1 text-outline hover:text-error transition-colors">
-          <span class="material-symbols-outlined text-[18px]">delete</span>
-        </button>
+        <div class="flex gap-1 flex-shrink-0">
+          <button onclick="openEditEvent('${ev.id}')" class="p-1.5 rounded-full hover:bg-primary-fixed text-primary transition-colors" title="수정">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+          </button>
+          <button onclick="deleteItem('event','${ev.id}')" class="p-1.5 rounded-full hover:bg-error-container/20 text-outline hover:text-error transition-colors" title="삭제">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
       </div>`).join('');
   }
   container.classList.remove('hidden');
@@ -1113,6 +1166,7 @@ function renderFamilyMembers() {
 // ─── Render: Activity Feed ───────────────────────────────────────────────
 function renderActivityFeed(activities) {
   const el = document.getElementById('activity-feed');
+  if (!el) return;
   if (!activities.length) {
     el.innerHTML = '<p class="text-body-sm text-on-surface-variant text-center py-4">활동 내역이 없습니다</p>';
     return;
@@ -1120,10 +1174,10 @@ function renderActivityFeed(activities) {
   el.innerHTML = activities.slice(0,10).map(a => `
     <div class="flex gap-3">
       <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">
-        ${a.userName ? a.userName[0].toUpperCase() : '?'}
+        ${a.userName ? escHtml(a.userName[0].toUpperCase()) : '?'}
       </div>
       <div class="bg-surface-container-low p-3 rounded-tr-xl rounded-br-xl rounded-bl-xl flex-grow">
-        <p class="text-body-sm">${a.message}</p>
+        <p class="text-body-sm">${escHtml(a.message)}</p>
         <p class="text-[10px] text-outline mt-1">${formatTime(a.createdAt)}</p>
       </div>
     </div>`).join('');
@@ -1203,7 +1257,8 @@ window.googleLogin = async function() {
 };
 
 window.signOut = async function() {
-  if (!confirm('로그아웃하시겠습니까?')) return;
+  const confirmed = await showConfirm('로그아웃하시겠습니까?');
+  if (!confirmed) return;
   await fbSignOut(auth);
 };
 
@@ -1238,47 +1293,89 @@ window.saveItem = async function() {
   btn.innerHTML = '<span class="spinner"></span>';
   btn.disabled = true;
 
+  const isEdit = !!editingId;
+
   try {
     if (modalType === 'event') {
       const data = {
         familyId,
-        title,
-        date: document.getElementById('modal-date').value || new Date().toISOString().slice(0,10),
+        title:     escHtml(title),
+        date:      document.getElementById('modal-date').value || new Date().toISOString().slice(0,10),
         timeStart: document.getElementById('modal-time-start').value || '',
         timeEnd:   document.getElementById('modal-time-end').value || '',
-        location:  document.getElementById('modal-location').value.trim(),
+        location:  escHtml(document.getElementById('modal-location').value.trim()),
         assignees: selectedAssignees,
-        note: document.getElementById('modal-note').value.trim(),
-        createdBy: currentUser.uid,
-        createdAt: serverTimestamp()
+        note:      escHtml(document.getElementById('modal-note').value.trim()),
       };
-      await addDoc(collection(db, 'events'), data);
-      await logActivity('event_added', `${currentUser.displayName||currentUser.email}님이 일정을 추가했습니다: ${title}`);
-      await sendFamilyNotification(`새 일정: ${title}`, 'event');
-      showToast('일정이 추가되었습니다 ✅');
+
+      if (isEdit) {
+        // ── 수정 ──
+        await updateDoc(doc(db, 'events', editingId), {
+          ...data,
+          lastEditedBy: currentUser.uid,
+          lastEditedAt: serverTimestamp(),
+        });
+        showToast('일정이 수정되었습니다 ✏️');
+        logActivity('event_edited',
+          `${currentUser.displayName||currentUser.email}님이 일정을 수정했습니다: ${title}`);
+        sendFamilyNotification(`일정 수정: ${title}`, 'event');
+      } else {
+        // ── 신규 ──
+        await addDoc(collection(db, 'events'), {
+          ...data,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp(),
+        });
+        showToast('일정이 추가되었습니다 ✅');
+        logActivity('event_added',
+          `${currentUser.displayName||currentUser.email}님이 일정을 추가했습니다: ${title}`);
+        sendFamilyNotification(`새 일정: ${title}`, 'event');
+      }
+
     } else {
       const data = {
         familyId,
-        title,
-        priority: taskPriority,
+        title:     escHtml(title),
+        priority:  taskPriority,
         assignees: selectedAssignees,
-        note: document.getElementById('modal-note').value.trim(),
-        done: false,
-        createdBy: currentUser.uid,
-        createdAt: serverTimestamp()
+        note:      escHtml(document.getElementById('modal-note').value.trim()),
       };
-      await addDoc(collection(db, 'tasks'), data);
-      await logActivity('task_added', `${currentUser.displayName||currentUser.email}님이 할일을 추가했습니다: ${title}`);
-      await sendFamilyNotification(`새 할일: ${title}`, 'task');
-      showToast('할일이 추가되었습니다 ✅');
+
+      if (isEdit) {
+        // ── 수정 ──
+        await updateDoc(doc(db, 'tasks', editingId), {
+          ...data,
+          lastEditedBy: currentUser.uid,
+          lastEditedAt: serverTimestamp(),
+        });
+        showToast('할일이 수정되었습니다 ✏️');
+        logActivity('task_edited',
+          `${currentUser.displayName||currentUser.email}님이 할일을 수정했습니다: ${title}`);
+        sendFamilyNotification(`할일 수정: ${title}`, 'task');
+      } else {
+        // ── 신규 ──
+        await addDoc(collection(db, 'tasks'), {
+          ...data,
+          done:      false,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp(),
+        });
+        showToast('할일이 추가되었습니다 ✅');
+        logActivity('task_added',
+          `${currentUser.displayName||currentUser.email}님이 할일을 추가했습니다: ${title}`);
+        sendFamilyNotification(`새 할일: ${title}`, 'task');
+      }
     }
+
     closeModal('event-modal');
     resetModal();
   } catch(e) {
+    console.error('saveItem error:', e);
     showToast('저장 실패: ' + e.message);
+  } finally {
+    btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span>저장';
+    btn.disabled = false;
   }
-  btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span>저장';
-  btn.disabled = false;
 };
 
 window.toggleTask = async function(id, done) {
@@ -1286,17 +1383,24 @@ window.toggleTask = async function(id, done) {
     await updateDoc(doc(db, 'tasks', id), { done, updatedAt: serverTimestamp() });
     if (done) {
       const task = allTasks.find(t => t.id === id);
-      if (task) await logActivity('task_done', `${currentUser.displayName||currentUser.email}님이 완료했습니다: ${task.title}`);
+      if (task) logActivity('task_done', `${currentUser.displayName||currentUser.email}님이 완료했습니다: ${task.title}`);
     }
-  } catch(e) { showToast('업데이트 실패'); }
+  } catch(e) {
+    console.error('toggleTask error:', e);
+    showToast('업데이트 실패: ' + e.message);
+  }
 };
 
 window.deleteItem = async function(type, id) {
-  if (!confirm('삭제하시겠습니까?')) return;
+  const confirmed = await showConfirm('삭제하시겠습니까?');
+  if (!confirmed) return;
   try {
     await deleteDoc(doc(db, type === 'event' ? 'events' : 'tasks', id));
     showToast('삭제되었습니다');
-  } catch(e) { showToast('삭제 실패'); }
+  } catch(e) {
+    console.error('deleteItem error:', e);
+    showToast('삭제 실패: ' + e.message);
+  }
 };
 
 // ─── Profile ──────────────────────────────────────────────────────────────
@@ -1352,7 +1456,7 @@ window.joinFamily = async function() {
     await updateDoc(doc(db, 'families', code), { members: [...members, currentUser.uid] });
     await updateDoc(doc(db, 'users', currentUser.uid), { familyId: code, role: 'member' });
     familyId = code;
-    await logActivity('member_joined', `${currentUser.displayName||currentUser.email}님이 가족에 참여했습니다`);
+    logActivity('member_joined', `${currentUser.displayName||currentUser.email}님이 가족에 참여했습니다`);
 
     showToast('가족에 참여했습니다 🎉');
     document.getElementById('join-code-input').value = '';
@@ -1419,30 +1523,138 @@ async function logActivity(type, message) {
 }
 
 // ─── Modal logic ─────────────────────────────────────────────────────────
+
+// 신규 추가
 window.openModal = function(id) {
+  editingId   = null;
+  editingType = null;
+  resetModal();
   document.getElementById(id).classList.add('open');
   document.body.style.overflow = 'hidden';
   renderAssigneeChips();
 };
+
+// 수정 모드로 열기 (일정)
+window.openEditEvent = function(eventId) {
+  const ev = allEvents.find(e => e.id === eventId);
+  if (!ev) return showToast('일정을 찾을 수 없습니다');
+  editingId   = eventId;
+  editingType = 'event';
+
+  // 폼 채우기
+  setModalType('event');
+  document.getElementById('modal-item-title').value   = ev.title || '';
+  document.getElementById('modal-date').value         = ev.date || '';
+  document.getElementById('modal-time-start').value   = ev.timeStart || '';
+  document.getElementById('modal-time-end').value     = ev.timeEnd || '';
+  document.getElementById('modal-location').value     = ev.location || '';
+  document.getElementById('modal-note').value         = ev.note || '';
+  selectedAssignees = [...(ev.assignees || [])];
+
+  // UI 수정 모드 표시
+  setEditModeUI('event', ev);
+  document.getElementById('event-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderAssigneeChips();
+};
+
+// 수정 모드로 열기 (할일)
+window.openEditTask = function(taskId) {
+  const t = allTasks.find(t => t.id === taskId);
+  if (!t) return showToast('할일을 찾을 수 없습니다');
+  editingId   = taskId;
+  editingType = 'task';
+
+  // 폼 채우기
+  setModalType('task');
+  document.getElementById('modal-item-title').value = t.title || '';
+  document.getElementById('modal-note').value       = t.note || '';
+  selectedAssignees = [...(t.assignees || [])];
+  taskPriority = t.priority || 'mid';
+  setTaskPriority(taskPriority);
+
+  // UI 수정 모드 표시
+  setEditModeUI('task', t);
+  document.getElementById('event-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderAssigneeChips();
+};
+
+function setEditModeUI(type, item) {
+  // 수정 모드 배지
+  document.getElementById('modal-edit-badge').classList.remove('hidden');
+  document.getElementById('modal-delete-btn').classList.remove('hidden');
+  // 타입 전환 버튼 숨김 (수정 중 타입 변경 불가)
+  document.getElementById('modal-type-selector').classList.add('hidden');
+  // 제목
+  document.getElementById('modal-title').textContent = type === 'event' ? '일정 수정' : '할일 수정';
+  // 최종 수정자 표시
+  const editorEl = document.getElementById('modal-last-editor');
+  if (item.lastEditedBy) {
+    const editor = familyMembers.find(m => m.uid === item.lastEditedBy);
+    const editorName = editor ? (editor.displayName || editor.email) : '알 수 없음';
+    const timeStr = item.lastEditedAt ? formatTime(item.lastEditedAt) : '';
+    editorEl.textContent = `마지막 수정: ${editorName} ${timeStr}`;
+    editorEl.classList.remove('hidden');
+  } else {
+    // 작성자 표시
+    const creator = familyMembers.find(m => m.uid === item.createdBy);
+    if (creator) {
+      editorEl.textContent = `작성: ${creator.displayName || creator.email}`;
+      editorEl.classList.remove('hidden');
+    }
+  }
+  // 저장 버튼 텍스트
+  document.getElementById('btn-save-item').innerHTML =
+    '<span class="material-symbols-outlined">save</span>수정 저장';
+}
+
 window.closeModal = function(id) {
   document.getElementById(id).classList.remove('open');
   document.body.style.overflow = '';
+  editingId   = null;
+  editingType = null;
 };
+
 document.querySelectorAll('.modal-bg').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
 });
 
 function resetModal() {
-  document.getElementById('modal-item-title').value = '';
-  document.getElementById('modal-date').value = '';
-  document.getElementById('modal-time-start').value = '';
-  document.getElementById('modal-time-end').value = '';
-  document.getElementById('modal-location').value = '';
-  document.getElementById('modal-note').value = '';
+  document.getElementById('modal-item-title').value   = '';
+  document.getElementById('modal-date').value         = '';
+  document.getElementById('modal-time-start').value   = '';
+  document.getElementById('modal-time-end').value     = '';
+  document.getElementById('modal-location').value     = '';
+  document.getElementById('modal-note').value         = '';
   selectedAssignees = [];
-  taskPriority = 'mid';
+  taskPriority      = 'mid';
+  // UI 초기화
+  document.getElementById('modal-edit-badge').classList.add('hidden');
+  document.getElementById('modal-delete-btn').classList.add('hidden');
+  document.getElementById('modal-last-editor').classList.add('hidden');
+  document.getElementById('modal-type-selector').classList.remove('hidden');
+  document.getElementById('btn-save-item').innerHTML =
+    '<span class="material-symbols-outlined">check_circle</span>저장';
   setModalType('event');
 }
+
+// 모달 내 삭제 버튼
+window.deleteFromModal = async function() {
+  if (!editingId || !editingType) return;
+  const confirmed = await showConfirm(
+    editingType === 'event' ? '이 일정을 삭제하시겠습니까?' : '이 할일을 삭제하시겠습니까?'
+  );
+  if (!confirmed) return;
+  try {
+    await deleteDoc(doc(db, editingType === 'event' ? 'events' : 'tasks', editingId));
+    showToast('삭제되었습니다');
+    closeModal('event-modal');
+  } catch(e) {
+    console.error('deleteFromModal error:', e);
+    showToast('삭제 실패: ' + e.message);
+  }
+};
 
 window.setModalType = function(type) {
   modalType = type;
@@ -1521,6 +1733,43 @@ window.showPage = function(name) {
 };
 
 // ─── Utilities ────────────────────────────────────────────────────────────
+// HTML 이스케이프 — 사용자 입력이 innerHTML에 들어갈 때 XSS 방지 및 렌더 오류 방지
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// uid → 표시 이름 변환
+function getMemberName(uid) {
+  if (!uid) return '';
+  const m = familyMembers.find(m => m.uid === uid);
+  return m ? (m.displayName || m.email).split(' ')[0] : '알 수 없음';
+}
+
+// confirm() 대체 — 모바일에서 confirm()이 UI를 멈추는 문제 해결
+function showConfirm(message) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirm-overlay');
+    const msg = document.getElementById('confirm-message');
+    msg.textContent = message;
+    overlay.classList.add('open');
+    const yes = document.getElementById('confirm-yes');
+    const no  = document.getElementById('confirm-no');
+    const cleanup = (result) => {
+      overlay.classList.remove('open');
+      yes.replaceWith(yes.cloneNode(true));
+      no.replaceWith(no.cloneNode(true));
+      resolve(result);
+    };
+    document.getElementById('confirm-yes').onclick = () => cleanup(true);
+    document.getElementById('confirm-no').onclick  = () => cleanup(false);
+  });
+}
 function genCode(n) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from({length:n}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
