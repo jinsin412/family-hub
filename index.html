@@ -229,6 +229,9 @@ tailwind.config = {
   <button onclick="showPage('routine')" id="nav-routine" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
     <span class="material-symbols-outlined">schedule</span>
   </button>
+  <button onclick="showPage('shop')" id="nav-shop" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
+    <span class="material-symbols-outlined">storefront</span>
+  </button>
   <button onclick="showPage('settings')" id="nav-settings" class="desk-nav w-12 h-12 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container transition-all">
     <span class="material-symbols-outlined">settings</span>
   </button>
@@ -583,6 +586,84 @@ tailwind.config = {
   </main>
 </div>
 
+<!-- ===== POINT SHOP PAGE ===== -->
+<div id="page-shop" class="page">
+  <main class="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-6">
+
+    <!-- 헤더 + 내 포인트 카드 -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-headline-lg font-headline-lg text-on-surface">포인트샵</h2>
+        <p class="text-body-sm text-on-surface-variant mt-1">할일을 완료하고 모은 포인트로 상품을 구매하세요</p>
+      </div>
+      <button id="reward-add-btn" onclick="openRewardModal()" class="hidden items-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-xl text-label-md font-label-md hover:opacity-90 active:scale-95 transition-all shadow-md">
+        <span class="material-symbols-outlined text-[18px]">add</span>상품 등록
+      </button>
+    </div>
+
+    <!-- 내 포인트 요약 카드 -->
+    <section class="bg-primary rounded-xl p-6 text-on-primary shadow-lg relative overflow-hidden">
+      <div class="relative z-10 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-10">
+        <div>
+          <p class="text-label-md opacity-80 mb-1">사용 가능 포인트</p>
+          <p class="text-display-lg font-display-lg leading-none"><span id="my-point-balance">0</span><span class="text-headline-sm font-headline-sm ml-1">pt</span></p>
+        </div>
+        <div class="flex gap-8">
+          <div>
+            <p class="text-label-md opacity-70">누적 획득</p>
+            <p class="text-headline-sm font-headline-sm mt-0.5"><span id="my-point-earned">0</span>pt</p>
+          </div>
+          <div>
+            <p class="text-label-md opacity-70">사용 · 대기</p>
+            <p class="text-headline-sm font-headline-sm mt-0.5"><span id="my-point-spent">0</span>pt</p>
+          </div>
+        </div>
+      </div>
+      <div class="absolute -right-8 -bottom-8 opacity-20 rotate-12">
+        <span class="material-symbols-outlined text-[120px]">savings</span>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 상품 목록 -->
+      <section class="lg:col-span-2">
+        <h3 class="text-headline-sm font-headline-sm text-primary flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined">redeem</span>포인트 상품
+        </h3>
+        <div id="reward-list" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div class="col-span-full flex items-center justify-center h-32 text-on-surface-variant text-body-sm">
+            <span class="spinner border-outline-variant border-t-primary mr-2"></span>로딩 중...
+          </div>
+        </div>
+      </section>
+
+      <!-- 구매 요청 / 내역 -->
+      <aside class="space-y-6">
+        <!-- 관리자: 대기 중 구매 요청 -->
+        <section id="admin-redemption-panel" class="hidden bg-surface-container-lowest rounded-xl p-5 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-tertiary/20">
+          <h3 class="text-headline-sm font-headline-sm text-tertiary flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined">approval</span>구매 요청 처리
+            <span id="pending-redemption-count" class="text-[11px] font-bold text-white bg-tertiary px-2 py-0.5 rounded-full ml-auto hidden">0</span>
+          </h3>
+          <div id="admin-redemption-list" class="space-y-3">
+            <p class="text-body-sm text-on-surface-variant text-center py-3">대기 중인 요청이 없습니다</p>
+          </div>
+        </section>
+
+        <!-- 가족 구매 내역 -->
+        <section class="bg-surface-container-lowest rounded-xl p-5 shadow-[0px_4px_12px_rgba(0,0,0,0.04)]">
+          <h3 class="text-headline-sm font-headline-sm text-primary flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined">receipt_long</span>구매 내역
+          </h3>
+          <div id="redemption-history" class="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
+            <p class="text-body-sm text-on-surface-variant text-center py-3">구매 내역이 없습니다</p>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+
 </div><!-- end md:ml-20 -->
 </div><!-- end app-shell -->
 
@@ -597,19 +678,22 @@ tailwind.config = {
      BOTTOM NAV (MOBILE)
 ═══════════════════════════════════════════════ -->
 <nav id="bottom-nav" class="hidden md:hidden fixed bottom-0 left-0 w-full bg-surface shadow-[0px_-4px_12px_rgba(0,0,0,0.04)] z-50 flex justify-around items-center px-4 py-3">
-  <button onclick="showPage('home')" id="mob-home" class="mob-nav flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 transition-all">
+  <button onclick="showPage('home')" id="mob-home" class="mob-nav flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1 transition-all">
     <span class="material-symbols-outlined">home</span><span class="text-label-md font-label-md">홈</span>
   </button>
-  <button onclick="showPage('calendar')" id="mob-calendar" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
+  <button onclick="showPage('calendar')" id="mob-calendar" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:bg-surface-container-high transition-colors">
     <span class="material-symbols-outlined">calendar_month</span><span class="text-label-md font-label-md">캘린더</span>
   </button>
-  <button onclick="showPage('tasks')" id="mob-tasks" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
+  <button onclick="showPage('tasks')" id="mob-tasks" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:bg-surface-container-high transition-colors">
     <span class="material-symbols-outlined">assignment_turned_in</span><span class="text-label-md font-label-md">할일</span>
   </button>
-  <button onclick="showPage('routine')" id="mob-routine" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
+  <button onclick="showPage('routine')" id="mob-routine" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:bg-surface-container-high transition-colors">
     <span class="material-symbols-outlined">schedule</span><span class="text-label-md font-label-md">일과</span>
   </button>
-  <button onclick="showPage('settings')" id="mob-settings" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors">
+  <button onclick="showPage('shop')" id="mob-shop" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:bg-surface-container-high transition-colors">
+    <span class="material-symbols-outlined">storefront</span><span class="text-label-md font-label-md">포인트샵</span>
+  </button>
+  <button onclick="showPage('settings')" id="mob-settings" class="mob-nav flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:bg-surface-container-high transition-colors">
     <span class="material-symbols-outlined">settings</span><span class="text-label-md font-label-md">설정</span>
   </button>
 </nav>
@@ -785,6 +869,45 @@ tailwind.config = {
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════
+     MODAL: REWARD (포인트 상품 등록 — 관리자 전용)
+═══════════════════════════════════════════════ -->
+<div id="reward-modal" class="modal-bg">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-headline-md font-headline-md text-primary">포인트 상품 등록</h2>
+      <button onclick="closeModal('reward-modal')" class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="space-y-5">
+      <!-- 이모지 선택 -->
+      <div>
+        <p class="text-label-md font-label-md text-on-surface-variant mb-2">상품 아이콘</p>
+        <div id="reward-emoji-chips" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- 상품명 -->
+      <div class="input-focus-ring flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3">
+        <span class="material-symbols-outlined text-outline mr-3 text-[18px]">sell</span>
+        <input id="reward-name" type="text" placeholder="상품명 (예: 아이스크림, 게임 30분)" maxlength="30" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+      </div>
+
+      <!-- 가격 -->
+      <div class="input-focus-ring flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3">
+        <span class="material-symbols-outlined text-outline mr-3 text-[18px]">toll</span>
+        <input id="reward-cost" type="number" min="10" step="10" placeholder="필요 포인트 (예: 100)" class="w-full bg-transparent border-none focus:ring-0 text-body-md placeholder:text-outline-variant"/>
+        <span class="text-body-sm text-on-surface-variant font-bold ml-2">pt</span>
+      </div>
+
+      <button id="btn-save-reward" onclick="saveReward()" class="w-full bg-primary text-on-primary h-12 rounded-xl font-semibold text-body-md flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform">
+        <span class="material-symbols-outlined">check_circle</span>등록
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Modal -->
 <div id="confirm-overlay" class="modal-bg" style="z-index:9999;">
   <div style="background:#faf9f7;border-radius:1rem;padding:1.5rem;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
@@ -870,6 +993,13 @@ let selectedAssignees = [];
 let unsubscribers = [];
 let editingId     = null;
 let editingType   = null;
+
+// ─── 포인트샵 상태 ───────────────────────────────────────────
+let allRewards      = [];   // 등록된 포인트 상품
+let allRedemptions  = [];   // 구매 요청/내역
+let rewardEmoji     = '🎁'; // 상품 등록 모달에서 선택된 이모지
+const REWARD_EMOJIS = ['🎁','🍦','🍕','🎮','📱','🎬','🧸','📚','⚽','🚲','💰','🍭'];
+const POINT_PER_TASK = 10;  // 할일 1건 완료 시 지급 포인트
 
 // 가족 멤버별 색상 팔레트 (bg, text, border, light 순)
 const MEMBER_COLORS = [
@@ -1091,6 +1221,55 @@ async function loadFamilyData() {
     document.getElementById('notif-badge').classList.toggle('hidden', unread === 0);
     renderNotifications(notifs);
   }, err => console.error('[Notifications] 쿼리 오류:', err.message)));
+
+  // Realtime: 포인트 상품 (rewards)
+  const rewardQ = query(
+    collection(db, 'rewards'),
+    where('familyId', '==', familyId)
+  );
+  unsubscribers.push(onSnapshot(rewardQ, snap => {
+    allRewards = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.cost || 0) - (b.cost || 0));
+    renderShopPage();
+  }, err => console.error('[Rewards] 쿼리 오류:', err.message)));
+
+  // Realtime: 구매 요청/내역 (redemptions)
+  const redemptionQ = query(
+    collection(db, 'redemptions'),
+    where('familyId', '==', familyId)
+  );
+  unsubscribers.push(onSnapshot(redemptionQ, snap => {
+    allRedemptions = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const ta = a.requestedAt?.toMillis?.() || 0;
+        const tb = b.requestedAt?.toMillis?.() || 0;
+        return tb - ta;
+      });
+    renderShopPage();
+    renderLeaderboard(); // 잔여 포인트 반영
+  }, err => console.error('[Redemptions] 쿼리 오류:', err.message)));
+}
+
+// ─── 포인트 계산 ─────────────────────────────────────────────
+// 획득: 완료된 할일 × 10pt / 사용: 대기(pending)·지급완료(fulfilled) 합계 (거절은 환불)
+function getPointStats(uid) {
+  let earned = 0;
+  allTasks.filter(t => t.done).forEach(t => {
+    if ((t.assignees || []).includes(uid)) earned += POINT_PER_TASK;
+  });
+  let spent = 0;
+  allRedemptions
+    .filter(r => r.uid === uid && (r.status === 'pending' || r.status === 'fulfilled'))
+    .forEach(r => { spent += r.cost || 0; });
+  return { earned, spent, balance: earned - spent };
+}
+
+function isAdmin() {
+  if (!currentUser) return false;
+  const me = familyMembers.find(m => m.uid === currentUser.uid);
+  return me?.role === 'admin';
 }
 
 // ─── Render: Home Events ─────────────────────────────────────────────────
@@ -1564,7 +1743,10 @@ function renderLeaderboard() {
         ${memberAvatar(uid, 28)}
         <span class="text-body-md font-medium" style="color:${c.light};">${name}</span>
       </div>
-      <span class="font-bold text-body-md">${pts}pt</span>
+      <div class="text-right">
+        <span class="font-bold text-body-md">${pts}pt</span>
+        <p class="text-[10px] opacity-70">보유 ${getPointStats(uid).balance}pt</p>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1730,6 +1912,11 @@ function renderActivityFeed(activities) {
     item_deleted:  { icon: 'delete',             color: '#ba1a1a' },
     member_joined: { icon: 'person_add',         color: '#7b1fa2' },
     family_joined: { icon: 'family_restroom',    color: '#024481' },
+    reward_added:     { icon: 'new_releases',    color: '#024481' },
+    reward_deleted:   { icon: 'delete',          color: '#ba1a1a' },
+    reward_requested: { icon: 'shopping_cart',   color: '#6b3600' },
+    reward_fulfilled: { icon: 'redeem',          color: '#006d41' },
+    reward_rejected:  { icon: 'undo',            color: '#ba1a1a' },
   };
 
   el.innerHTML = activities.slice(0, 20).map(a => {
@@ -1772,7 +1959,7 @@ function renderNotifications(notifs) {
     <div class="flex gap-4 p-4 ${n.read?'bg-surface-container-lowest':'bg-primary-fixed/20'} rounded-xl border border-outline-variant/30 cursor-pointer hover:bg-surface-container transition-colors"
          onclick="markNotifRead('${n.id}')">
       <span class="material-symbols-outlined ${n.read?'text-on-surface-variant':'text-primary'} flex-shrink-0">
-        ${n.type==='task'?'assignment_turned_in':n.type==='event'?'event':'notifications'}
+        ${n.type==='task'?'assignment_turned_in':n.type==='event'?'event':n.type==='reward'?'redeem':'notifications'}
       </span>
       <div class="flex-1">
         <p class="text-body-sm font-${n.read?'normal':'semibold'} text-on-surface">${n.message}</p>
@@ -2582,7 +2769,7 @@ window.quickAssignTask = async function(taskId, uid) {
 };
 
 // ─── Page Navigation ─────────────────────────────────────────────────────
-const PAGES = ['home','calendar','tasks','routine','settings','notifications'];
+const PAGES = ['home','calendar','tasks','routine','shop','settings','notifications'];
 window.showPage = function(name) {
   PAGES.forEach(p => document.getElementById('page-'+p)?.classList.remove('active'));
   document.getElementById('page-'+name)?.classList.add('active');
@@ -2595,6 +2782,7 @@ window.showPage = function(name) {
     selectCalDay(todayStr, now.getDate());
   }
   if (name === 'routine') { renderRoutineTabs(); }
+  if (name === 'shop')    { renderShopPage(); }
   // 할일 탭: 오늘 날짜로 초기화
   if (name === 'tasks') {
     taskViewDate = getLocalToday();
@@ -2609,10 +2797,10 @@ window.showPage = function(name) {
   if (db2) db2.className = 'desk-nav w-12 h-12 flex items-center justify-center rounded-xl bg-primary text-on-primary shadow-md transition-all';
 
   document.querySelectorAll('.mob-nav').forEach(b => {
-    b.className = 'mob-nav flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors';
+    b.className = 'mob-nav flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:bg-surface-container-high transition-colors';
   });
   const mb = document.getElementById('mob-'+name);
-  if (mb) mb.className = 'mob-nav flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 transition-all';
+  if (mb) mb.className = 'mob-nav flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1 transition-all';
 
   window.scrollTo({top:0, behavior:'smooth'});
 };
@@ -3000,6 +3188,249 @@ window.deleteRoutineItem = async function() {
   }
 };
 
+
+// ═══════════════════════════════════════════════════════════
+//  POINT SHOP (포인트샵)
+// ═══════════════════════════════════════════════════════════
+
+// ── 특정 사용자에게 인앱 알림 + 푸시 전송 ─────────────────────
+async function notifyUser(toUid, message, type = 'reward') {
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      toUid, familyId, message, type,
+      read: false,
+      createdAt: serverTimestamp()
+    });
+    sendFamilyPushViaFunction(toUid, '결율 Diary 포인트샵', message).catch(() => {});
+  } catch(e) { console.warn('notifyUser error:', e); }
+}
+
+// ── 상태 배지 ────────────────────────────────────────────────
+function redemptionBadge(status) {
+  if (status === 'pending')   return '<span class="text-[10px] font-bold text-tertiary bg-tertiary-fixed px-2 py-0.5 rounded-full">지급 대기</span>';
+  if (status === 'fulfilled') return '<span class="text-[10px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded-full">지급 완료</span>';
+  return '<span class="text-[10px] font-bold text-error bg-error-container px-2 py-0.5 rounded-full">거절 (환불)</span>';
+}
+
+// ── 메인 렌더 ────────────────────────────────────────────────
+function renderShopPage() {
+  const balanceEl = document.getElementById('my-point-balance');
+  if (!balanceEl || !currentUser) return;
+
+  // 1) 내 포인트 요약
+  const stats = getPointStats(currentUser.uid);
+  balanceEl.textContent = stats.balance;
+  document.getElementById('my-point-earned').textContent = stats.earned;
+  document.getElementById('my-point-spent').textContent  = stats.spent;
+
+  // 2) 관리자 UI 토글
+  const admin = isAdmin();
+  const addBtn = document.getElementById('reward-add-btn');
+  addBtn.classList.toggle('hidden', !admin);
+  addBtn.classList.toggle('flex', admin);
+  document.getElementById('admin-redemption-panel').classList.toggle('hidden', !admin);
+
+  // 3) 상품 목록
+  const listEl = document.getElementById('reward-list');
+  if (!allRewards.length) {
+    listEl.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center h-32 gap-2 text-on-surface-variant">
+      <span class="material-symbols-outlined text-4xl">storefront</span>
+      <p class="text-body-sm">${admin ? '상품 등록 버튼으로 첫 상품을 추가하세요' : '아직 등록된 상품이 없습니다'}</p>
+    </div>`;
+  } else {
+    listEl.innerHTML = allRewards.map(r => {
+      const affordable = stats.balance >= (r.cost || 0);
+      return `
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-variant/30 flex flex-col items-center text-center gap-2 relative group">
+        ${admin ? `<button onclick="deleteReward('${r.id}')" class="absolute top-2 right-2 p-1 rounded-full text-outline hover:text-error hover:bg-error-container/20 transition-colors" title="상품 삭제">
+          <span class="material-symbols-outlined text-[16px]">delete</span>
+        </button>` : ''}
+        <span class="text-4xl">${r.emoji || '🎁'}</span>
+        <p class="text-body-sm font-semibold text-on-surface leading-tight">${escHtml(r.name)}</p>
+        <p class="text-headline-sm font-headline-sm text-primary">${r.cost}<span class="text-label-md ml-0.5">pt</span></p>
+        <button onclick="purchaseReward('${r.id}')" ${affordable ? '' : 'disabled'}
+          class="w-full py-2 rounded-xl text-label-md font-label-md transition-all
+          ${affordable
+            ? 'bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-sm'
+            : 'bg-surface-container text-outline cursor-not-allowed'}">
+          ${affordable ? '구매하기' : `${(r.cost || 0) - stats.balance}pt 부족`}
+        </button>
+      </div>`;
+    }).join('');
+  }
+
+  // 4) 관리자: 대기 중 구매 요청
+  if (admin) {
+    const pending = allRedemptions.filter(r => r.status === 'pending');
+    const cntEl = document.getElementById('pending-redemption-count');
+    cntEl.textContent = pending.length;
+    cntEl.classList.toggle('hidden', pending.length === 0);
+    const adminEl = document.getElementById('admin-redemption-list');
+    adminEl.innerHTML = !pending.length
+      ? '<p class="text-body-sm text-on-surface-variant text-center py-3">대기 중인 요청이 없습니다</p>'
+      : pending.map(r => `
+        <div class="p-3 rounded-xl bg-tertiary-fixed/30 border border-tertiary/20 space-y-2">
+          <div class="flex items-center gap-2">
+            ${memberAvatar(r.uid, 28)}
+            <div class="flex-1 min-w-0">
+              <p class="text-body-sm font-semibold text-on-surface truncate">${r.emoji || '🎁'} ${escHtml(r.rewardName)}</p>
+              <p class="text-[11px] text-on-surface-variant">${escHtml(getMemberName(r.uid))} · ${r.cost}pt · ${formatTime(r.requestedAt)}</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="handleRedemption('${r.id}','fulfilled')" class="flex-1 py-1.5 rounded-lg bg-secondary text-on-secondary text-label-md font-label-md hover:opacity-90 active:scale-95 transition-all">지급 완료</button>
+            <button onclick="handleRedemption('${r.id}','rejected')" class="flex-1 py-1.5 rounded-lg border border-error/40 text-error text-label-md font-label-md hover:bg-error-container/20 transition-colors">거절</button>
+          </div>
+        </div>`).join('');
+  }
+
+  // 5) 가족 구매 내역
+  const histEl = document.getElementById('redemption-history');
+  histEl.innerHTML = !allRedemptions.length
+    ? '<p class="text-body-sm text-on-surface-variant text-center py-3">구매 내역이 없습니다</p>'
+    : allRedemptions.slice(0, 30).map(r => `
+      <div class="flex items-center gap-2.5 p-2.5 rounded-xl border border-outline-variant/30 bg-surface-container-low">
+        ${memberAvatar(r.uid, 28)}
+        <div class="flex-1 min-w-0">
+          <p class="text-body-sm font-medium text-on-surface truncate">${r.emoji || '🎁'} ${escHtml(r.rewardName)}</p>
+          <p class="text-[11px] text-on-surface-variant">${escHtml(getMemberName(r.uid))} · ${formatTime(r.requestedAt)}</p>
+        </div>
+        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+          <span class="text-body-sm font-bold ${r.status === 'rejected' ? 'text-outline line-through' : 'text-primary'}">-${r.cost}pt</span>
+          ${redemptionBadge(r.status)}
+        </div>
+      </div>`).join('');
+}
+
+// ── 상품 등록 모달 (관리자) ──────────────────────────────────
+window.openRewardModal = function() {
+  if (!isAdmin()) return showToast('관리자만 상품을 등록할 수 있습니다');
+  rewardEmoji = '🎁';
+  document.getElementById('reward-name').value = '';
+  document.getElementById('reward-cost').value = '';
+  renderRewardEmojiChips();
+  document.getElementById('reward-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+function renderRewardEmojiChips() {
+  const el = document.getElementById('reward-emoji-chips');
+  el.innerHTML = REWARD_EMOJIS.map(e => `
+    <button type="button" onclick="setRewardEmoji('${e}')"
+      class="w-10 h-10 rounded-xl text-xl flex items-center justify-center border-2 transition-all
+      ${rewardEmoji === e ? 'border-primary bg-primary-fixed' : 'border-outline-variant bg-white hover:border-primary'}">${e}</button>`).join('');
+}
+
+window.setRewardEmoji = function(e) {
+  rewardEmoji = e;
+  renderRewardEmojiChips();
+};
+
+window.saveReward = async function() {
+  if (!isAdmin()) return showToast('관리자만 상품을 등록할 수 있습니다');
+  const name = document.getElementById('reward-name').value.trim();
+  const cost = parseInt(document.getElementById('reward-cost').value, 10);
+  if (!name)                 return showToast('상품명을 입력하세요');
+  if (!cost || cost <= 0)    return showToast('필요 포인트를 올바르게 입력하세요');
+
+  const btn = document.getElementById('btn-save-reward');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled  = true;
+  try {
+    await addDoc(collection(db, 'rewards'), {
+      familyId,
+      name:      escHtml(name),
+      cost,
+      emoji:     rewardEmoji,
+      createdBy: currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+    showToast('상품이 등록되었습니다 🎁');
+    logActivity('reward_added', `🎁 ${currentUser.displayName || currentUser.email}님이 포인트 상품을 등록했습니다: ${name} (${cost}pt)`);
+    closeModal('reward-modal');
+  } catch(e) {
+    showToast('등록 실패: ' + e.message);
+  } finally {
+    btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span>등록';
+    btn.disabled  = false;
+  }
+};
+
+window.deleteReward = async function(id) {
+  if (!isAdmin()) return showToast('관리자만 상품을 삭제할 수 있습니다');
+  const r = allRewards.find(x => x.id === id);
+  const confirmed = await showConfirm(`'${r?.name || '상품'}'을(를) 삭제하시겠습니까?`);
+  if (!confirmed) return;
+  try {
+    await deleteDoc(doc(db, 'rewards', id));
+    showToast('상품이 삭제되었습니다');
+    logActivity('reward_deleted', `🗑️ ${currentUser.displayName || currentUser.email}님이 포인트 상품을 삭제했습니다: ${r?.name || ''}`);
+  } catch(e) {
+    showToast('삭제 실패: ' + e.message);
+  }
+};
+
+// ── 상품 구매 (일반 사용자) ──────────────────────────────────
+window.purchaseReward = async function(id) {
+  const r = allRewards.find(x => x.id === id);
+  if (!r) return;
+  const stats = getPointStats(currentUser.uid);
+  if (stats.balance < r.cost) {
+    return showToast(`포인트가 ${r.cost - stats.balance}pt 부족합니다`);
+  }
+  const confirmed = await showConfirm(`${r.emoji || '🎁'} '${r.name}'을(를) ${r.cost}pt에 구매하시겠습니까? 구매 즉시 포인트가 차감되며, 관리자 확인 후 지급됩니다.`);
+  if (!confirmed) return;
+  try {
+    const who = currentUser.displayName || currentUser.email;
+    await addDoc(collection(db, 'redemptions'), {
+      familyId,
+      rewardId:    r.id,
+      rewardName:  r.name,
+      emoji:       r.emoji || '🎁',
+      cost:        r.cost,
+      uid:         currentUser.uid,
+      userName:    who,
+      status:      'pending',
+      requestedAt: serverTimestamp()
+    });
+    showToast('구매 요청이 접수되었습니다 🛒 관리자 확인을 기다려주세요');
+    logActivity('reward_requested', `🛒 ${who}님이 상품을 구매했습니다: ${r.name} (${r.cost}pt)`);
+    // 모든 관리자에게 알림
+    familyMembers.filter(m => m.role === 'admin' && m.uid !== currentUser.uid)
+      .forEach(m => notifyUser(m.uid, `🛒 ${who}님이 '${r.name}'(${r.cost}pt) 구매를 요청했습니다. 포인트샵에서 지급 처리해주세요.`));
+  } catch(e) {
+    showToast('구매 실패: ' + e.message);
+  }
+};
+
+// ── 구매 요청 처리 (관리자: 지급 완료 / 거절) ─────────────────
+window.handleRedemption = async function(id, action) {
+  if (!isAdmin()) return showToast('관리자만 처리할 수 있습니다');
+  const r = allRedemptions.find(x => x.id === id);
+  if (!r || r.status !== 'pending') return;
+  const label = action === 'fulfilled' ? '지급 완료' : '거절(포인트 환불)';
+  const confirmed = await showConfirm(`${getMemberName(r.uid)}님의 '${r.rewardName}' 요청을 ${label} 처리하시겠습니까?`);
+  if (!confirmed) return;
+  try {
+    await updateDoc(doc(db, 'redemptions', id), {
+      status:    action,
+      handledBy: currentUser.uid,
+      handledAt: serverTimestamp()
+    });
+    const who = currentUser.displayName || currentUser.email;
+    if (action === 'fulfilled') {
+      showToast('지급 완료 처리되었습니다 ✅');
+      logActivity('reward_fulfilled', `✅ ${who}님이 상품을 지급했습니다: ${r.rewardName} → ${getMemberName(r.uid)}`);
+      notifyUser(r.uid, `🎉 '${r.rewardName}' 상품이 지급되었습니다!`);
+    } else {
+      showToast('거절 처리되었습니다. 포인트가 환불됩니다');
+      logActivity('reward_rejected', `↩️ ${who}님이 구매 요청을 거절했습니다: ${r.rewardName} (${r.cost}pt 환불)`);
+      notifyUser(r.uid, `'${r.rewardName}' 구매 요청이 거절되어 ${r.cost}pt가 환불되었습니다.`);
+    }
+  } catch(e) {
+    showToast('처리 실패: ' + e.message);
+  }
+};
 
 // Init calendar date display
 renderCalendar();
