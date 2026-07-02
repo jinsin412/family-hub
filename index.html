@@ -759,7 +759,11 @@ tailwind.config = {
       </div>
 
       <!-- Priority (for tasks) -->
-      <div id="task-fields" class="hidden">
+      <div id="task-fields" class="hidden space-y-4">
+        <div class="input-focus-ring flex items-center bg-white border border-outline-variant rounded-xl px-4 py-3">
+          <span class="material-symbols-outlined text-outline mr-3">event</span>
+          <input id="modal-task-date" type="date" class="w-full bg-transparent border-none focus:ring-0 text-body-md"/>
+        </div>
         <div class="flex gap-2">
           <button onclick="setTaskPriority('high')" id="pri-high" class="flex-1 py-2 rounded-xl border-2 border-error text-error text-label-md font-label-md hover:bg-error-container/20 transition-colors">높음</button>
           <button onclick="setTaskPriority('mid')" id="pri-mid" class="flex-1 py-2 rounded-xl border-2 border-outline-variant text-on-surface-variant text-label-md font-label-md hover:bg-surface-container transition-colors">보통</button>
@@ -2101,6 +2105,7 @@ window.saveItem = async function() {
       const data = {
         familyId,
         title:     escHtml(title),
+        dueDate:   document.getElementById('modal-task-date').value || getLocalToday(),
         priority:  taskPriority,
         assignees: selectedAssignees,
         note:      escHtml(document.getElementById('modal-note').value.trim()),
@@ -2577,6 +2582,13 @@ window.openEditTask = function(taskId) {
   setModalType('task');
   document.getElementById('modal-item-title').value = t.title || '';
   document.getElementById('modal-note').value       = t.note || '';
+  // 날짜: dueDate 우선, 없으면 생성일 기준 (기존 데이터 호환)
+  let taskDate = t.dueDate || '';
+  if (!taskDate && t.createdAt) {
+    const c = t.createdAt.toDate?.() || new Date(t.createdAt);
+    taskDate = [c.getFullYear(), String(c.getMonth()+1).padStart(2,'0'), String(c.getDate()).padStart(2,'0')].join('-');
+  }
+  document.getElementById('modal-task-date').value = taskDate || getLocalToday();
   selectedAssignees = [...(t.assignees || [])];
   taskPriority = t.priority || 'mid';
   setTaskPriority(taskPriority);
@@ -2635,6 +2647,10 @@ function resetModal() {
   document.getElementById('modal-time-end').value     = '';
   document.getElementById('modal-location').value     = '';
   document.getElementById('modal-note').value         = '';
+  // 할일 날짜: 할일 페이지에서 열면 보고 있던 날짜, 그 외에는 오늘로 기본 설정
+  const onTasksPage = document.getElementById('page-tasks')?.classList.contains('active');
+  document.getElementById('modal-task-date').value =
+    (onTasksPage && taskViewDate) ? taskViewDate : getLocalToday();
   selectedAssignees = [];
   taskPriority      = 'mid';
   // UI 초기화
