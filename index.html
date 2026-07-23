@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>결율 Diary</title>
-<meta name="theme-color" content="#024481"/>
+<meta name="theme-color" content="#ff6b81"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
@@ -21,20 +21,20 @@ tailwind.config = {
   theme:{
     extend:{
       colors:{
-        "on-surface-variant":"#424750","outline-variant":"#c2c6d1","background":"#faf9f7",
-        "on-secondary":"#ffffff","on-tertiary-fixed-variant":"#6f3800","on-background":"#1a1c1b",
-        "inverse-primary":"#a6c8ff","on-primary-fixed":"#001c3b","surface-container-lowest":"#ffffff",
-        "primary-fixed":"#d5e3ff","error-container":"#ffdad6","on-secondary-container":"#007144",
-        "primary":"#024481","on-primary":"#ffffff","on-tertiary":"#ffffff","outline":"#737781",
-        "surface-container-high":"#e9e8e6","surface-container-highest":"#e3e2e0","on-error":"#ffffff",
-        "on-secondary-fixed-variant":"#005230","on-tertiary-container":"#ffc9a1","tertiary-container":"#8a4b10",
-        "on-primary-container":"#bcd5ff","secondary":"#006d41","surface-variant":"#e3e2e0",
-        "on-tertiary-fixed":"#2f1400","on-primary-fixed-variant":"#094784","primary-fixed-dim":"#a6c8ff",
-        "surface":"#faf9f7","on-surface":"#1a1c1b","on-secondary-fixed":"#002110","on-error-container":"#93000a",
-        "secondary-container":"#91f4b8","inverse-surface":"#2f3130","surface-dim":"#dadad8",
-        "primary-container":"#2a5c9a","surface-container":"#efeeec","tertiary-fixed":"#ffdcc4",
-        "error":"#ba1a1a","tertiary-fixed-dim":"#ffb780","surface-container-low":"#f4f3f1",
-        "tertiary":"#6b3600","secondary-fixed":"#94f7bb"
+        "on-surface-variant":"#74656d","outline-variant":"#e4cfd8","background":"#fff9f3",
+        "on-secondary":"#ffffff","on-tertiary-fixed-variant":"#6f3800","on-background":"#3d3540",
+        "inverse-primary":"#a6c8ff","on-primary-fixed":"#4a1722","surface-container-lowest":"#ffffff",
+        "primary-fixed":"#ffe0e7","error-container":"#ffdad6","on-secondary-container":"#155f50",
+        "primary":"#ff6b81","on-primary":"#ffffff","on-tertiary":"#ffffff","outline":"#8d7c84",
+        "surface-container-high":"#f2e4ea","surface-container-highest":"#ead9e1","on-error":"#ffffff",
+        "on-secondary-fixed-variant":"#005230","on-tertiary-container":"#ffffff","tertiary-container":"#8b6bd6",
+        "on-primary-container":"#6d2332","secondary":"#42bfa3","surface-variant":"#f0dfe6",
+        "on-tertiary-fixed":"#2f1400","on-primary-fixed-variant":"#8e3044","primary-fixed-dim":"#ffc4d0",
+        "surface":"#fff9f3","on-surface":"#3d3540","on-secondary-fixed":"#002110","on-error-container":"#93000a",
+        "secondary-container":"#c9f4e8","inverse-surface":"#2f3130","surface-dim":"#dadad8",
+        "primary-container":"#ff8fa3","surface-container":"#f8edf2","tertiary-fixed":"#eee5ff",
+        "error":"#ba1a1a","tertiary-fixed-dim":"#d9c8ff","surface-container-low":"#fff1f4",
+        "tertiary":"#8b6bd6","secondary-fixed":"#94f7bb"
       },
       borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},
       spacing:{"calendar-half-hour":"32px",sm:"8px",md:"16px",lg:"24px",xs:"4px",base:"8px",xl:"32px","calendar-hour-height":"64px"},
@@ -101,6 +101,42 @@ tailwind.config = {
   #profile-upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;}
   /* Notification badge */
   .notif-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#ba1a1a;border:2px solid #faf9f7;}
+
+  /* Casual family theme overrides */
+  body{background:
+    radial-gradient(circle at 10% 0%,rgba(255,196,208,.28),transparent 28%),
+    radial-gradient(circle at 92% 8%,rgba(201,244,232,.38),transparent 24%),
+    #fff9f3;color:#3d3540;}
+  header{background:rgba(255,249,243,.88)!important;backdrop-filter:blur(16px);border-bottom:1px solid rgba(228,207,216,.7);}
+  .modal-box{background:#fffaf6;border:1px solid #f0dfe6;box-shadow:0 24px 70px rgba(91,55,70,.2);}
+  .glass-card{background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.8);box-shadow:0 12px 30px rgba(123,80,99,.08);}
+  .page main section,.page main aside>section,.page main aside>div,.page main>div.bg-surface-container-lowest{transition:transform .2s ease,box-shadow .2s ease;}
+  .page main section:hover,.page main aside>section:hover{transform:translateY(-2px);}
+  .bg-surface-container-lowest{box-shadow:0 8px 24px rgba(117,78,96,.07)!important;border-color:rgba(240,223,230,.9)!important;}
+  button{transition:transform .18s ease,filter .18s ease,background-color .18s ease!important;}
+  button:hover{filter:saturate(1.05);}
+  button:active{transform:scale(.96);}
+  #auth-screen{background:linear-gradient(145deg,#fff4f5 0%,#fffaf3 48%,#eefcf8 100%);}
+  #auth-screen .w-20.h-20{background:linear-gradient(135deg,#ff6b81,#ff9e72)!important;box-shadow:0 16px 35px rgba(255,107,129,.28);transform:rotate(-3deg);}
+  #auth-screen h1:after{content:' ✨';font-size:.75em;}
+  nav.md\:flex{background:rgba(255,244,247,.92)!important;border-right:1px solid #f0dfe6;}
+  #bottom-nav{background:rgba(255,250,247,.94)!important;backdrop-filter:blur(18px);border-top:1px solid #f0dfe6;}
+  .desk-nav,.mob-nav{border-radius:16px!important;}
+  .desk-nav.bg-primary,.mob-nav.bg-primary-container{box-shadow:0 8px 18px rgba(255,107,129,.23)!important;}
+  #fab-btn{background:linear-gradient(135deg,#ff6b81,#ff9e72)!important;box-shadow:0 12px 28px rgba(255,107,129,.35)!important;}
+  input,textarea,select{color:#3d3540!important;}
+  .input-focus-ring{border-radius:16px!important;}
+  .input-focus-ring:focus-within{box-shadow:0 0 0 3px rgba(255,107,129,.16)!important;border-color:#ff8fa3!important;}
+  #install-banner{background:linear-gradient(135deg,#ff6b81,#8b6bd6)!important;}
+  #toast{background:#51434a;box-shadow:0 10px 28px rgba(61,53,64,.22);}
+  .ev-primary{background:rgba(255,224,231,.55);border-left-color:#ff6b81;}
+  .ev-secondary{background:rgba(201,244,232,.55);border-left-color:#42bfa3;}
+  .ev-tertiary{background:rgba(238,229,255,.65);border-left-color:#8b6bd6;}
+  @media(max-width:767px){
+    .page main{padding-top:1.25rem!important;}
+    .bg-surface-container-lowest{border-radius:20px!important;}
+    #bottom-nav{padding-bottom:max(12px,env(safe-area-inset-bottom));}
+  }
 </style>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen">
@@ -489,6 +525,9 @@ tailwind.config = {
               <div class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
             </label>
           </div>
+          <button onclick="testNotification()" class="w-full mb-3 py-2.5 rounded-xl border-2 border-dashed border-primary-fixed-dim text-primary text-label-md font-label-md hover:bg-primary-fixed transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">notifications_active</span>알림 테스트
+          </button>
           <!-- VAPID 키 입력 (선택사항) -->
           <div id="vapid-section" class="space-y-2">
             <p class="text-label-md font-label-md text-on-surface-variant">고급 (선택): 앱을 완전히 닫아도 오는 백그라운드 푸시 — VAPID 키 (Firebase 콘솔 → 프로젝트 설정 → 클라우드 메시징 → 웹 푸시 인증서의 "키 쌍")</p>
@@ -2276,7 +2315,7 @@ window.copyInviteCode = function() {
   navigator.clipboard.writeText(familyId).then(() => showToast('코드가 복사되었습니다 📋'));
 };
 
-// ─── Notifications (FCM) 완전 구현 ─────────────────────────────────────
+// ─── Notifications (실시간 + FCM 연동) ─────────────────────────────────
 // VAPID 키를 로컬스토리지에 저장/로드
 function getStoredVapidKey() {
   try { return localStorage.getItem('gyeolryul_vapid_key') || ''; } catch { return ''; }
@@ -2384,6 +2423,24 @@ async function requestNotifPermission() {
   return true;
 }
 
+// 알림 동작 점검: 브라우저 권한과 서비스워커 표시를 즉시 테스트
+window.testNotification = async function() {
+  const ok = await requestNotifPermission();
+  if (!ok) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    await navigator.serviceWorker.ready;
+    await reg.showNotification('결율 Diary 알림 테스트', {
+      body: '테스트 알림이 정상적으로 도착했습니다 🎉',
+      icon: 'icon.svg', badge: 'icon.svg', tag: 'gyeolryul-test'
+    });
+    showInAppNotification('알림 테스트 완료', '시스템 알림이 표시되지 않으면 운영체제 또는 브라우저 알림 설정을 확인하세요.');
+  } catch (e) {
+    console.error('[알림 테스트 실패]', e);
+    showToast('알림 테스트 실패: ' + e.message);
+  }
+};
+
 // 시스템 알림 표시 (Firestore 실시간 리스너 기반 — 서버 푸시 불필요)
 function triggerLocalNotification(title, body) {
   // 화면을 보고 있으면 인앱 배너만
@@ -2421,24 +2478,21 @@ async function enablePushNotifications(vapidKey) {
     }
   }
 
-  // 3. Service Worker 파일 등록 (사이트 루트에 firebase-messaging-sw.js 필요)
+  // 3. PWA와 FCM이 함께 사용하는 단일 Service Worker 등록
+  // 동일 scope(/)에 sw.js와 firebase-messaging-sw.js를 따로 등록하면 서로 덮어쓸 수 있으므로 sw.js 하나만 사용합니다.
   let swReg = null;
   try {
     if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      swReg = regs.find(r => r.active?.scriptURL?.includes('firebase-messaging-sw'));
-      if (!swReg) {
-        swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        await navigator.serviceWorker.ready;
-        console.log('[FCM SW] 등록 완료');
-      }
+      swReg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      await navigator.serviceWorker.ready;
+      console.log('[Unified SW] 등록 완료');
     }
   } catch(swErr) {
-    console.warn('[FCM SW] 등록 실패 (파일 미배포?):', swErr.message);
-    showToast('ℹ️ 실시간 알림은 켜졌습니다. 완전한 백그라운드 푸시는 firebase-messaging-sw.js 파일 배포가 필요합니다');
+    console.warn('[Unified SW] 등록 실패:', swErr.message);
+    showToast('실시간 알림은 켜졌지만 백그라운드 푸시용 sw.js 등록에 실패했습니다');
     if (toggle) toggle.checked = true;
-    if (lbl)    lbl.textContent = '활성화됨 (실시간 알림) 🔔';
-    return; // 로컬 알림 모드로 계속 동작
+    if (lbl)    lbl.textContent = '활성화됨 (앱 실행 중) 🔔';
+    return;
   }
 
   // 4. FCM 토큰 발급
@@ -2483,7 +2537,7 @@ function showInAppNotification(title, body) {
   const banner = document.createElement('div');
   banner.style.cssText = `
     position:fixed;top:72px;right:16px;max-width:320px;z-index:9999;
-    background:#024481;color:#fff;border-radius:14px;padding:14px 16px;
+    background:linear-gradient(135deg,#ff6b81,#8b6bd6);color:#fff;border-radius:18px;padding:14px 16px;
     box-shadow:0 8px 24px rgba(0,0,0,0.25);
     animation:slideInRight .3s ease;display:flex;align-items:flex-start;gap:10px;
   `;
