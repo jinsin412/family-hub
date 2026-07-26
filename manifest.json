@@ -1,0 +1,24 @@
+{
+  "id": "./?source=pwa",
+  "name": "결율 Diary",
+  "short_name": "결율 Diary",
+  "description": "가족 모두가 함께하는 스마트 플래너",
+  "lang": "ko-KR",
+  "dir": "ltr",
+  "start_url": "./?source=pwa&v=20260726-3",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#fff9f3",
+  "theme_color": "#ff6b81",
+  "icons": [
+    {
+      "src": "./icon.svg?v=20260726-3",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "lifestyle"]
+}
