@@ -1,0 +1,23 @@
+// Firebase Console > Firestore Database > Rules에서 기존 규칙에 통합할 예시입니다.
+// 이 파일은 GitHub Pages 배포만으로 적용되지 않습니다.
+// 현재 앱의 가족 구성원별 조회를 위해 같은 가족 구성원에게 읽기를 허용합니다.
+match /point_adjustments/{adjustmentId} {
+  allow read: if request.auth != null
+    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == resource.data.familyId;
+
+  allow create: if request.auth != null
+    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == request.resource.data.familyId
+    && get(/databases/$(database)/documents/users/$(request.resource.data.uid)).data.familyId == request.resource.data.familyId
+    && request.resource.data.keys().hasOnly(['familyId', 'uid', 'type', 'amount', 'reason', 'createdBy', 'createdAt'])
+    && request.resource.data.createdBy == request.auth.uid
+    && request.resource.data.type in ['grant', 'deduct']
+    && request.resource.data.amount is int
+    && request.resource.data.amount > 0
+    && request.resource.data.reason is string
+    && request.resource.data.reason.size() > 0
+    && request.resource.data.reason.size() <= 200
+    && request.resource.data.createdAt == request.time;
+
+  allow update, delete: if false;
+}
