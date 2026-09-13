@@ -2089,7 +2089,7 @@ function renderNotifications(notifs) {
         ${n.type==='task'?'assignment_turned_in':n.type==='event'?'event':n.type==='reward'?'redeem':'notifications'}
       </span>
       <div class="flex-1">
-        <p class="text-body-sm font-${n.read?'normal':'semibold'} text-on-surface">${n.message}</p>
+        <p class="text-body-sm font-${n.read?'normal':'semibold'} text-on-surface">${escHtml(n.message)}</p>
         <p class="text-[11px] text-on-surface-variant mt-1">${formatTime(n.createdAt)}</p>
       </div>
       ${!n.read ? '<div class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></div>' : ''}
