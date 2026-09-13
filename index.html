@@ -653,7 +653,7 @@ tailwind.config = {
             <p class="text-headline-sm font-headline-sm mt-0.5"><span id="my-point-earned">0</span>pt</p>
           </div>
           <div>
-            <p class="text-label-md opacity-70">사용 · 대기</p>
+            <p class="text-label-md opacity-70">사용 · 대기 · 차감</p>
             <p class="text-headline-sm font-headline-sm mt-0.5"><span id="my-point-spent">0</span>pt</p>
           </div>
         </div>
@@ -3394,9 +3394,9 @@ function renderShopPage() {
 
   // 1) 내 포인트 요약
   const stats = getPointStats(currentUser.uid);
-  balanceEl.textContent = stats.balance;
-  document.getElementById('my-point-earned').textContent = stats.earned;
-  document.getElementById('my-point-spent').textContent  = stats.spent;
+  balanceEl.textContent = stats.balance.toLocaleString();
+  document.getElementById('my-point-earned').textContent = stats.earned.toLocaleString();
+  document.getElementById('my-point-spent').textContent  = stats.spent.toLocaleString();
 
   // 2) 관리자 UI 토글
   const admin = isAdmin();
