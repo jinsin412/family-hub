@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isFamilyMember(fid) {
+      return isSignedIn() && userDoc().familyId == fid;
+    }
+    function isFamilyAdmin(fid) {
+      return isFamilyMember(fid) && userDoc().role == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      // 신규 가입자는 존재하지 않는 가족의 생성자로만 시작할 수 있습니다.
+      allow create: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.uid == uid
+                    && request.resource.data.role == 'admin'
+                    && request.resource.data.familyId is string
+                    && !exists(/databases/$(database)/documents/families/$(request.resource.data.familyId));
+      // 프로필과 알림 설정 변경은 허용하고, 가족 참가 시에는 멤버 역할만 허용합니다.
+      allow update: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.uid == resource.data.uid
+                    && (
+                      (request.resource.data.familyId == resource.data.familyId
+                       && request.resource.data.role == resource.data.role)
+                      ||
+                      (request.resource.data.familyId != resource.data.familyId
+                       && request.resource.data.role == 'member'
+                       && exists(/databases/$(database)/documents/families/$(request.resource.data.familyId)))
+                    );
+    }
+
+    match /families/{fid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.id == fid
+                    && request.resource.data.createdBy == request.auth.uid
+                    && request.resource.data.members == [request.auth.uid]
+                    && userDoc().familyId == fid;
+      // 기존 참가/탈퇴 및 푸시 공개키 저장 흐름은 유지합니다.
+      allow update: if isSignedIn()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['members', 'vapidKey']);
+    }
+
+    match /events/{id} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      allow create: if isFamilyMember(request.resource.data.familyId);
+      allow update, delete: if isFamilyMember(resource.data.familyId);
+    }
+    match /tasks/{id} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      allow create: if isFamilyMember(request.resource.data.familyId);
+      allow update, delete: if isFamilyMember(resource.data.familyId);
+    }
+    match /routines/{id} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      allow create: if isFamilyMember(request.resource.data.familyId);
+      allow update, delete: if isFamilyMember(resource.data.familyId);
+    }
+    match /activity/{id} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      allow create: if isFamilyMember(request.resource.data.familyId);
+    }
+
+    match /notifications/{id} {
+      allow read, update: if isSignedIn() && resource.data.toUid == request.auth.uid;
+      allow create: if isSignedIn();
+    }
+    match /push_queue/{id} {
+      allow create: if isSignedIn();
+    }
+
+    match /rewards/{id} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      allow create: if isFamilyAdmin(request.resource.data.familyId);
+      allow update, delete: if isFamilyAdmin(resource.data.familyId);
+    }
+    match /redemptions/{id} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      allow create: if isFamilyMember(request.resource.data.familyId)
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.cost is int
+                    && request.resource.data.cost > 0;
+      allow update: if isFamilyAdmin(resource.data.familyId)
+                    && request.resource.data.status in ['fulfilled', 'rejected'];
+    }
+
+    match /point_adjustments/{id} {
+      allow read: if isFamilyMember(resource.data.familyId);
+      allow create: if isFamilyAdmin(request.resource.data.familyId)
+                    && exists(/databases/$(database)/documents/users/$(request.resource.data.uid))
+                    && get(/databases/$(database)/documents/users/$(request.resource.data.uid)).data.familyId == request.resource.data.familyId
+                    && request.resource.data.keys().hasAll(['familyId', 'uid', 'type', 'amount', 'reason', 'createdBy', 'createdAt'])
+                    && request.resource.data.keys().hasOnly(['familyId', 'uid', 'type', 'amount', 'reason', 'createdBy', 'createdAt'])
+                    && request.resource.data.createdBy == request.auth.uid
+                    && request.resource.data.type in ['grant', 'deduct']
+                    && request.resource.data.amount is int
+                    && request.resource.data.amount > 0
+                    && request.resource.data.reason is string
+                    && request.resource.data.reason.size() > 0
+                    && request.resource.data.reason.size() <= 200
+                    && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}
